@@ -107,8 +107,9 @@ Estimated criteria coverage:
   ...
 ```
 
-Ask: "Does this plan look correct? Proceed with implementation?"
-Wait for user confirmation before writing any code.
+If $ARGUMENTS contains `--auto`, skip this confirmation and proceed directly to Step 5.
+Otherwise ask: "Does this plan look correct? Proceed with implementation?"
+and wait for user confirmation before writing any code.
 
 ## Step 5: Execute
 
