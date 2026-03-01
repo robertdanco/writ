@@ -141,7 +141,7 @@ if [ "$GIT_STATUS" = "ERROR" ]; then
 fi
 if [ -n "$GIT_STATUS" ]; then
   warn "Uncommitted changes detected:"
-  git -C "$PROJECT_DIR" status --short
+  git -C "$PROJECT_DIR" status --short -uno
   echo ""
   read -r -p "Continue anyway? (y/N) " REPLY
   if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
