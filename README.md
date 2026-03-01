@@ -8,15 +8,34 @@ No custom infrastructure. No external orchestrators.
 ## Install
 
 ```bash
-git clone <this-repo> ~/sdd
-cd your-project
-~/sdd/init.sh
+git clone https://github.com/robertdanco/sdd /path/to/sdd
 ```
 
-Or install into a specific directory:
+Then install into any project:
 
 ```bash
-~/sdd/init.sh /path/to/your/project
+cd your-project
+/path/to/sdd/init.sh
+```
+
+Or install into a specific directory without cd-ing first:
+
+```bash
+/path/to/sdd/init.sh /path/to/your/project
+```
+
+**Recommended: add an alias** so you can run `sdd-init` from anywhere:
+
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+export SDD_HOME="/path/to/sdd"
+alias sdd-init="$SDD_HOME/init.sh"
+```
+
+Then:
+```bash
+cd your-project
+sdd-init
 ```
 
 The installer is idempotent - safe to re-run.
