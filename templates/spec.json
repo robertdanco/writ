@@ -1,0 +1,54 @@
+{
+  "project": "",
+  "version": "1.0.0",
+  "created_at": "",
+  "description": "",
+  "features": [
+    {
+      "id": "example-feature",
+      "title": "Example Feature",
+      "description": "Description of what this feature does from the user's perspective. Replace with real features via /sdd-ingest.",
+      "depends_on": [],
+      "priority": 1,
+      "status": "pending",
+      "acceptance_criteria": [
+        {
+          "description": "The main source file exists",
+          "type": "file_exists",
+          "target": "src/example.js",
+          "expected": ""
+        },
+        {
+          "description": "The file exports the main function",
+          "type": "file_contains",
+          "target": "src/example.js",
+          "expected": "export function"
+        },
+        {
+          "description": "Tests pass for this feature",
+          "type": "test_passes",
+          "target": "npm test -- --grep 'example feature'",
+          "expected": ""
+        },
+        {
+          "description": "No errors in build output",
+          "type": "command_succeeds",
+          "target": "npm run build",
+          "expected": ""
+        },
+        {
+          "description": "Expected pattern present in output files",
+          "type": "grep_match",
+          "target": "dist/",
+          "expected": "example"
+        },
+        {
+          "description": "Package version is set correctly",
+          "type": "json_path_check",
+          "target": "package.json",
+          "expected": ".version != null"
+        }
+      ]
+    }
+  ]
+}

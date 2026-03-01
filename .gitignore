@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs produced by sdd-loop.sh
+sdd-loop.log
+
+# Test installs (don't commit these)
+/tmp/
