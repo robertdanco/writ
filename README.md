@@ -1,4 +1,4 @@
-# SDD - Spec-Driven Development for Claude Code
+# SDD: Spec-Driven Development for Claude Code
 
 A reusable harness that turns Claude Code into a spec-driven development system
 using only native primitives: CLAUDE.md, slash commands, agent definitions, and git.
