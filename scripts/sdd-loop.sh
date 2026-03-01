@@ -115,7 +115,7 @@ if [ ! -d "$PROJECT_DIR/.git" ]; then
   exit 1
 fi
 
-GIT_STATUS=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null || echo "ERROR")
+GIT_STATUS=$(git -C "$PROJECT_DIR" status --porcelain -uno 2>/dev/null || echo "ERROR")
 if [ "$GIT_STATUS" = "ERROR" ]; then
   err "git status failed in $PROJECT_DIR"
   exit 1
