@@ -74,8 +74,10 @@ Create a structured git commit for the feature ID in $ARGUMENTS, then update sta
    }
    ```
 
-8. Update `spec.json`: set `features[*].status` to `"completed"` for this feature ID.
-   Only modify the `status` field.
+8. **REQUIRED** - Update `spec.json`: find the feature with matching `id` and set its
+   `status` field to `"completed"`. This must be done even if the feature was previously
+   marked `in_progress`. Only modify the `status` field, leave all other fields unchanged.
+   Verify with: `python3 -c "import json; s=json.load(open('spec.json')); print([f['status'] for f in s['features'] if f['id']=='<feature-id>'])"` — must show `['completed']`.
 
 9. If `progress.md` exists, append a one-line entry:
    ```

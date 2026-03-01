@@ -49,23 +49,42 @@ if [ ! -f "$PROJECT_DIR/spec.json" ]; then
 fi
 
 # Count pending features using python (avoids jq dependency)
-count_pending() {
+count_completed() {
+  # Read from progress.json (authoritative) not spec.json (may lag behind)
   python3 -c "
-import json, sys
-with open('$PROJECT_DIR/spec.json') as f:
-    spec = json.load(f)
-pending = [f for f in spec.get('features', []) if f.get('status') in ('pending', 'in_progress')]
-print(len(pending))
+import json, os
+p_file = '$PROJECT_DIR/progress.json'
+if not os.path.exists(p_file):
+    print(0)
+else:
+    with open(p_file) as f:
+        p = json.load(f)
+    features = p.get('features', p)  # handle both {features:{...}} and flat {id:{...}}
+    if isinstance(features, dict):
+        done = [v for v in features.values() if isinstance(v, dict) and v.get('status') == 'completed']
+        print(len(done))
+    else:
+        print(0)
 " 2>/dev/null || echo "0"
 }
 
-count_completed() {
+count_pending() {
   python3 -c "
-import json, sys
-with open('$PROJECT_DIR/spec.json') as f:
+import json, os
+s_file = '$PROJECT_DIR/spec.json'
+p_file = '$PROJECT_DIR/progress.json'
+with open(s_file) as f:
     spec = json.load(f)
-done = [f for f in spec.get('features', []) if f.get('status') == 'completed']
-print(len(done))
+total = len(spec.get('features', []))
+# completed = progress.json entries with status completed
+completed = 0
+if os.path.exists(p_file):
+    with open(p_file) as f:
+        p = json.load(f)
+    features = p.get('features', p)
+    if isinstance(features, dict):
+        completed = sum(1 for v in features.values() if isinstance(v, dict) and v.get('status') == 'completed')
+print(total - completed)
 " 2>/dev/null || echo "0"
 }
 
