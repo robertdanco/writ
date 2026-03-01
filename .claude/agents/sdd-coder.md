@@ -28,10 +28,14 @@ of its acceptance criteria. If any previously-passing criterion now fails:
 
 ```
 STOP. Regression detected in <feature-id>: <failing criterion>
-I need to fix this before implementing new features.
+
+How would you like to proceed?
+1. Fix the regression (I will investigate and propose a fix for your approval)
+2. Skip and continue (risky)
 ```
 
-Fix the regression first. Only proceed to new work when all regressions are resolved.
+**Do not diagnose, do not run additional commands, do not attempt any fix.**
+Output the message above and wait for the user to reply before taking any action.
 
 ## Feature selection
 

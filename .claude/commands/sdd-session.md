@@ -33,14 +33,19 @@ Run `/sdd-verify --all` before doing anything else.
 If any previously-completed feature now fails verification:
 ```
 REGRESSION DETECTED in: <feature-id>
-<criterion that failed>
+Failing criterion: <description>
+Command: <target>
 
 Cannot start new work until regressions are resolved.
-Options:
-1. Fix the regression now (recommended)
-2. Skip and continue (risky - may compound bugs)
+
+How would you like to proceed?
+1. Fix the regression (I will investigate and propose a fix for your approval)
+2. Skip and continue (risky)
 ```
-Wait for user input. If option 1, investigate and fix before proceeding.
+
+**STOP HERE. Do not diagnose, do not run any commands, do not restore any files.**
+Output the message above and wait for the user to reply with 1 or 2.
+Only after receiving a reply should you take any action.
 
 If all checks pass (or no features are completed yet), continue.
 
