@@ -137,7 +137,7 @@ Do NOT execute the rollback without explicit user confirmation.
 Once all criteria pass, update state files first, then commit everything together:
 
 Update `progress.json`:
-- Add entry for this feature: `status`, `completed_at`, `commit_hash`, `criteria_results`
+- Add entry for this feature: `status`, `completed_at`, `commit_hash` (set to `"TBD"` for now), `criteria_results`
 - Update `last_session` at root
 - Set `next_recommended` to the next eligible pending feature
 
@@ -156,6 +156,13 @@ Criteria: N/N passed
 EOF
 )"
 ```
+
+Backfill the commit hash into `progress.json`:
+```bash
+git rev-parse HEAD
+```
+Update the `commit_hash` field for this feature in `progress.json` with the real hash.
+Do NOT create another commit - leave it as a working tree change.
 
 ## Handoff
 
