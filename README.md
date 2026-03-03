@@ -1,9 +1,22 @@
-# Writ: Structured Development for Claude Code
+# Writ
 
-A reusable harness that turns Claude Code into a structured development system
-using only native primitives: CLAUDE.md, slash commands, agent definitions, and git.
+Structured development primitives for Claude Code.
 
-No custom infrastructure. No external orchestrators.
+## The problem
+
+AI coding agents are powerful but unreliable at scale. They overengineer, skip
+verification, lose context across sessions, and mark things done without testing.
+The longer the session, the worse it gets. If you've watched an agent confidently
+commit broken code, or build a five-layer abstraction for a three-line change,
+Writ was built for that problem.
+
+## How Writ works
+
+You write a spec with mechanically verifiable acceptance criteria. Claude
+implements one feature at a time, verifies every criterion, and commits. State
+persists in JSON across sessions so Claude reconstructs context from files rather
+than memory. No custom infrastructure - just CLAUDE.md, slash commands, agents,
+and git.
 
 ## Install
 
@@ -32,13 +45,205 @@ export WRIT_HOME="/path/to/writ"
 alias writ-init="$WRIT_HOME/init.sh"
 ```
 
-Then:
-```bash
-cd your-project
-writ-init
+The installer is idempotent - safe to re-run.
+
+## Quick start
+
+### Option A: You have a PRD
+
+```
+/writ-ingest prd.md
+# Review and approve the generated writ.json
+
+/writ-session
+# Claude implements the first feature, verifies it, and commits
 ```
 
-The installer is idempotent - safe to re-run.
+### Option B: Starting from scratch
+
+```
+# In Claude Code:
+"Use the writ-initializer agent to set up the project"
+# Claude asks clarifying questions, scaffolds the project, generates writ.json
+
+/writ-session
+# Begin implementation
+```
+
+### Option C: Existing codebase (no PRD)
+
+```
+/writ-introspect
+# Claude scans the codebase, discovers existing features, generates writ.json
+# All discovered features are marked "completed" (the baseline)
+
+/writ-ingest prd.md    # optional: add new features on top of the baseline
+/writ-session          # start implementing pending features
+```
+
+## Key ideas
+
+### Specs, not prompts
+
+The core artifact is `writ.json` - a contract that defines what each feature
+must do in terms the model can verify mechanically. Each acceptance criterion
+has a type, a target, and an expected value. The type tells Claude exactly how
+to check it. There's no interpretation: `file_contains` either finds the string
+or it doesn't.
+
+| Type | What it checks | `target` | `expected` |
+|---|---|---|---|
+| `file_exists` | File is present | File path | (empty) |
+| `file_contains` | File has specific content | File path | String to find |
+| `command_succeeds` | Command exits 0 | Shell command | (empty) |
+| `test_passes` | Test command exits 0 | Test command | (empty) |
+| `grep_match` | Pattern found in files | Directory or glob | Pattern |
+| `json_path_check` | JSON file field has expected value | JSON file path | jq filter expression |
+
+Typed criteria also prevent a class of problem where the model interprets
+ambiguous prose differently on each run. Six types, each with exactly one
+evaluation method.
+
+### Mechanical verification
+
+Every criterion resolves to an exit code. No LLM-as-judge. An objective bit
+that cannot be argued with. This is what makes autonomous mode possible:
+`writ-loop.sh` can run sessions unattended because "did it pass?" has a
+deterministic answer. Models are capable evaluators of their own work when you
+give them the right question - and exit code 0 is the right question.
+
+### One feature per session
+
+Focus produces better code than breadth. Each session starts with a fresh
+context window, loads exactly the files it needs, implements one feature,
+verifies every criterion, and commits. State files (not memory) carry continuity
+between sessions. Claude reconstructs context from `writ.json`, `progress.json`,
+and `git log` at the start of each session - faster and more reliably than from
+compacted summaries.
+
+### The session protocol
+
+Every `/writ-session` follows five phases:
+
+1. **Explore** - Load state, check for stale safety tags, run regression check on existing features
+2. **Plan** - Reconnaissance of project shape and conventions, generate a plan with full criteria coverage mapping
+3. **Execute** - Create a safety tag, implement one feature, nothing more
+4. **Verify** - Check every criterion mechanically. After 3 failures, option to revert to the safety tag
+5. **Commit** - Structured commit, update progress.json, clean up safety tag
+
+The regression check in Explore blocks new work on existing failures. The
+safety tag in Execute gives you a clean rollback point. The structured commit
+in Commit produces a git log that reads like a feature changelog.
+
+### Structured state
+
+Cross-session continuity comes from three files, not memory.
+
+`writ.json` holds the spec - features, priorities, dependencies, and acceptance
+criteria. It's frozen before any code is written.
+
+`progress.json` tracks session results, keyed by feature ID. JSON over prose
+because models corrupt Markdown more easily, and because `writ-loop.sh` and
+`/writ-status` can parse it mechanically without LLM interpretation.
+
+`git log` carries the audit trail. Every commit message follows a structured
+format.
+
+A feature in `writ.json` looks like this:
+
+```json
+{
+  "id": "user-auth",
+  "title": "User Authentication",
+  "description": "A user can sign up, log in, and log out",
+  "depends_on": [],
+  "priority": 1,
+  "status": "pending",
+  "acceptance_criteria": [
+    { "description": "Login route exists", "type": "file_exists",
+      "target": "src/routes/auth.js", "expected": "" },
+    { "description": "Login function is exported", "type": "file_contains",
+      "target": "src/routes/auth.js", "expected": "export function login" },
+    { "description": "Auth tests pass", "type": "test_passes",
+      "target": "npm test -- --grep 'auth'", "expected": "" }
+  ]
+}
+```
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `/writ-ingest <file>` | Two-phase PRD ingestion: parse features, then expand to verifiable criteria. Marks ambiguous requirements `[NEEDS CLARIFICATION]` before proceeding. |
+| `/writ-introspect` | Brownfield analysis: scans an existing codebase, discovers features with user checkpoints, and generates a verified baseline `writ.json`. |
+| `/writ-session [feature-id]` | Full session: regression check, feature selection, plan, implement, verify, commit. |
+| `/writ-plan [feature-id]` | Plan only - runs Explore and Plan phases, stops before executing. Shows exactly what Claude would do before you commit to it. |
+| `/writ-verify <feature-id>` or `--all` | Evaluate criteria mechanically. `--all` checks all completed features for regressions. Read-only. |
+| `/writ-commit <feature-id>` | Structured commit and progress.json update. Called automatically by `/writ-session`. |
+| `/writ-status` | Project dashboard: counts, progress bar, last session summary, next recommended feature. Read-only. |
+
+## Agents
+
+**`writ-initializer`** - For new projects or when no `writ.json` exists yet.
+Reads a PRD, asks clarifying questions, scaffolds the project, and generates
+`writ.json`. Does not implement features.
+
+```
+"Use the writ-initializer agent to initialize this project"
+```
+
+**`writ-coder`** - The feature implementation agent. Follows the full 5-phase
+protocol, enforces anti-overengineering constraints, and cannot spawn subagents.
+Use when you want to delegate a complete feature implementation as a bounded task.
+
+```
+"Use the writ-coder agent to implement feature user-auth"
+```
+
+## Autonomous mode
+
+Once your spec is solid and your criteria are reliable, `writ-loop.sh` runs
+sessions automatically - the pattern from Anthropic's C compiler case study.
+
+```bash
+# Dry run - preview what would happen (default)
+bash scripts/writ-loop.sh
+
+# Run for real - sessions execute until all features complete or stuck
+bash scripts/writ-loop.sh --confirm
+
+# Cap sessions explicitly
+bash scripts/writ-loop.sh --confirm --max-sessions 5
+
+# Target a specific project directory
+bash scripts/writ-loop.sh --confirm /path/to/project
+```
+
+Exit conditions: all features complete, max sessions reached, no progress
+detected (same pending count before and after a session), or a session fails.
+Each session is logged to `writ-loop.log`.
+
+**When to use:** After running a few interactive sessions to validate your
+criteria are reliable. Immature specs with vague criteria will get stuck.
+
+## CI integration
+
+Export acceptance criteria as a standalone CI check script:
+
+```bash
+bash scripts/writ-export-checks.sh > ci-checks.sh
+bash ci-checks.sh  # exits non-zero if any criterion fails
+```
+
+All 6 criterion types are supported. Use in any CI system:
+
+```yaml
+# GitHub Actions
+- run: bash <(bash scripts/writ-export-checks.sh)
+```
+
+A starter workflow is at `templates/github-actions-writ.yml`. Copy it to
+`.github/workflows/writ-checks.yml` to get CI running immediately.
 
 ## What gets installed
 
@@ -64,306 +269,3 @@ your-project/
         ├── writ-initializer.md   # First-session scaffolding agent
         └── writ-coder.md         # Feature implementation agent
 ```
-
-## Quick start
-
-### Option A: You have a PRD
-
-```
-cd your-project
-claude
-
-/writ-ingest prd.md
-# Review and approve the generated writ.json
-
-/writ-session
-# Claude implements the first feature, verifies it, and commits
-```
-
-### Option B: Starting from scratch
-
-```
-cd your-project
-claude
-
-# In Claude Code:
-"Use the writ-initializer agent to set up the project"
-# Claude asks clarifying questions, scaffolds the project, generates writ.json
-
-/writ-session
-# Begin implementation
-```
-
-### Option C: You have an existing codebase (no PRD)
-
-```
-cd your-project
-claude
-
-/writ-introspect
-# Claude scans the codebase, discovers existing features, generates writ.json
-# All discovered features are cataloged as "completed" (the baseline)
-
-/writ-ingest prd.md    # optional: add new features on top of the baseline
-/writ-session          # start implementing pending features
-```
-
-## The 5-phase session protocol
-
-Every `/writ-session` follows this loop:
-
-1. **Explore** - Load state, check for stale safety tags, run regression check.
-2. **Plan** - Structured reconnaissance (project shape, utilities, conventions),
-   generate plan with full criteria coverage mapping.
-3. **Execute** - Create safety tag, implement one feature, nothing more.
-4. **Verify** - Check every criterion mechanically. After 3 failures, option
-   to revert to safety tag.
-5. **Commit** - Structured commit, update progress.json, clean up safety tag.
-
-## Commands
-
-### `/writ-introspect`
-
-Brownfield codebase analysis. Discovers existing features from code, tests, and docs and
-generates `writ.json` + `progress.json` that establish a verified baseline under Writ governance.
-
-Six-phase process:
-1. **Reconnaissance** - scans project structure and detects archetype (HTTP server, CLI, library, frontend, monorepo)
-2. **Feature discovery** - archetype-driven: routes grouped by resource, CLI commands, public exports, or pages
-3. **Behavioral scenarios** - derives "when I do X, I expect Y" from reading source code
-4. **Criteria generation** - generates 3-7 verifiable criteria per feature with confidence indicators (HIGH/MEDIUM/LOW)
-5. **Baseline verification** - runs all criteria mechanically; interactive resolution for any failures
-6. **Output** - writes `writ.json` (all discovered features as `completed`) and `progress.json`
-
-Three mandatory user checkpoints: feature list, behavioral scenarios, and criteria review.
-
-All brownfield features are written as `status: "completed"` so that:
-- `/writ-verify --all` includes them in regression checks
-- `/writ-session` skips them during feature selection
-- `writ-loop.sh` counts them correctly in progress.json
-
-Use `/writ-ingest` afterward (merge mode) to add new features on top of the baseline.
-
-### `/writ-status`
-
-Instant project dashboard. Shows total/done/pending/blocked feature counts, progress bar,
-last session summary, next recommended feature, and dependency chain. Read-only.
-
-Use at any time to orient yourself without starting a full session.
-
-### `/writ-plan [feature-id]`
-
-Generate a concrete implementation plan without writing any code. Runs the Explore and
-Plan phases of the 5-phase loop and stops before executing.
-
-Use this to:
-- Review what Claude would do before committing to a session
-- Check feasibility of a feature
-- Preview the implementation approach for a complex feature
-
-Output ends with: `"Plan complete. Run /writ-session <feature-id> to implement."`
-
-### `/writ-ingest <file-or-url>`
-
-Two-phase PRD ingestion:
-- Phase 1: Parse PRD into draft feature list, present for review
-- Phase 2: Expand features with specific, verifiable acceptance criteria
-
-Writes `writ.json` to the project root.
-
-Ambiguous requirements are marked `[NEEDS CLARIFICATION]` and must be resolved
-before criteria generation. If the project has a linter configured, lint
-criteria are automatically included. Features spanning 8+ files are flagged
-with `[SPLIT?]` for decomposition.
-
-### `/writ-session [feature-id]`
-
-Primary entry point for all development. Runs the full 5-phase loop.
-
-Optionally pass a feature ID to work on a specific feature instead of auto-selecting.
-
-### `/writ-verify <feature-id>` or `/writ-verify --all`
-
-Evaluates acceptance criteria mechanically. Does not modify files.
-
-Run `--all` to check all completed features for regressions.
-
-### `/writ-commit <feature-id>`
-
-Creates a structured commit and updates progress.json. Called automatically
-by `/writ-session` after successful verification.
-
-## writ.json structure
-
-```json
-{
-  "project": "My App",
-  "features": [
-    {
-      "id": "user-auth",
-      "title": "User Authentication",
-      "description": "A user can sign up, log in, and log out",
-      "depends_on": [],
-      "priority": 1,
-      "status": "pending",
-      "acceptance_criteria": [
-        {
-          "description": "Login route exists",
-          "type": "file_exists",
-          "target": "src/routes/auth.js",
-          "expected": ""
-        },
-        {
-          "description": "Login function is exported",
-          "type": "file_contains",
-          "target": "src/routes/auth.js",
-          "expected": "export function login"
-        },
-        {
-          "description": "Auth tests pass",
-          "type": "test_passes",
-          "target": "npm test -- --grep 'auth'",
-          "expected": ""
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Criterion types
-
-| Type | What it checks | `target` | `expected` |
-|---|---|---|---|
-| `file_exists` | File is present | File path | (empty) |
-| `file_contains` | File has specific content | File path | String to find |
-| `command_succeeds` | Command exits 0 | Shell command | (empty) |
-| `test_passes` | Test command exits 0 | Test command | (empty) |
-| `grep_match` | Pattern found in files | Directory or glob | Pattern |
-| `json_path_check` | JSON file field has expected value | JSON file path | jq filter expression |
-
-All criteria are mechanically verifiable - no subjective assessments.
-
-For `json_path_check`, the `expected` field is a jq filter expression that must return truthy:
-```json
-{ "type": "json_path_check", "target": "package.json", "expected": ".version == \"2.0.0\"" }
-{ "type": "json_path_check", "target": "config.json", "expected": ".database.host != null" }
-{ "type": "json_path_check", "target": "manifest.json", "expected": ".permissions | length > 0" }
-```
-
-## progress.json structure
-
-Keyed by feature ID for O(1) lookup and clean git diffs:
-
-```json
-{
-  "last_session": {
-    "date": "2026-03-01T14:00:00Z",
-    "feature_id": "user-auth",
-    "summary": "Implemented JWT-based auth with login and logout routes",
-    "next_recommended": "user-profile"
-  },
-  "user-auth": {
-    "status": "completed",
-    "started_at": "2026-03-01T13:00:00Z",
-    "completed_at": "2026-03-01T14:00:00Z",
-    "commit_hash": "abc1234",
-    "sessions": 1,
-    "criteria_results": {
-      "Login route exists": true,
-      "Login function is exported": true,
-      "Auth tests pass": true
-    }
-  }
-}
-```
-
-## Agents
-
-### `writ-initializer`
-
-Use for brand-new projects or when no `writ.json` exists yet. Reads a PRD,
-asks clarifying questions, scaffolds the project, generates writ.json, and
-writes `init.sh`. Does NOT implement features.
-
-Invoke from Claude Code: `"Use the writ-initializer agent to initialize this project"`
-
-### `writ-coder`
-
-The feature implementation agent. Follows the full 5-phase protocol, enforces
-anti-overengineering constraints, and cannot spawn subagents. Use when you want
-to delegate a complete feature implementation as a bounded task.
-
-Invoke from Claude Code: `"Use the writ-coder agent to implement feature user-auth"`
-
-## Autonomous mode
-
-Once your spec is solid and your acceptance criteria are reliable, `writ-loop.sh`
-runs sessions automatically - the pattern from Anthropic's C compiler case study.
-
-```bash
-# Dry run - preview what would happen (default)
-bash scripts/writ-loop.sh
-
-# Run for real - sessions execute until all features complete or stuck
-bash scripts/writ-loop.sh --confirm
-
-# Cap sessions explicitly
-bash scripts/writ-loop.sh --confirm --max-sessions 5
-
-# Target a specific project directory
-bash scripts/writ-loop.sh --confirm /path/to/project
-```
-
-Exit conditions: all features complete, max sessions reached, no progress detected
-(same pending count before and after a session), or a session fails.
-
-Each session is logged to `writ-loop.log` with timestamps.
-
-**When to use:** After running a few interactive sessions to validate your criteria
-are reliable. Immature specs with vague criteria will get stuck.
-
-## CI verification
-
-Export your acceptance criteria as a standalone CI check script:
-
-```bash
-# Generate a self-contained check script
-bash scripts/writ-export-checks.sh > ci-checks.sh
-
-# Run it (exits non-zero if any criterion fails)
-bash ci-checks.sh
-```
-
-The generated script checks all completed features against their criteria
-using the same evaluation logic as `/writ-verify`. All 6 criterion types are
-supported. Unknown types produce a SKIP warning, not a silent pass.
-
-Use in any CI system:
-```yaml
-# GitHub Actions example
-- run: bash <(bash scripts/writ-export-checks.sh)
-```
-
-A starter GitHub Actions workflow is included in `templates/github-actions-writ.yml`.
-Copy it to `.github/workflows/writ-checks.yml` to get CI running immediately.
-
-## Design principles
-
-This harness is built on 13 principles synthesized from Anthropic's engineering
-documentation. The key ones:
-
-- **One feature per session** - Focus produces better code than breadth
-- **Verify before commit** - Never mark complete without mechanical verification
-- **JSON for state, Markdown for notes** - Models are less likely to corrupt JSON
-- **Lean CLAUDE.md (~50 lines)** - Details in commands loaded on demand
-- **6 criterion types** - All mechanically verifiable, no subjective criteria
-- **Dual-prompt architecture** - Initializer (expansive) vs. coder (constrained)
-- **Regression check first** - Block new work on existing failures
-
-## After installation
-
-1. Fill in your build/test/start commands in `CLAUDE.md` under "Build and test commands"
-2. Either run `/writ-ingest` with your PRD (Option A), use the `writ-initializer` agent (Option B),
-   or run `/writ-introspect` to establish a baseline from an existing codebase (Option C)
-3. Run `/writ-session` for each feature - that's the whole workflow
