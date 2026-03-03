@@ -13,3 +13,6 @@ writ-loop.log
 
 # Test installs (don't commit these)
 /tmp/
+
+# Local-only reference docs (not for version control)
+references/anthropic-technical-guidance.md
