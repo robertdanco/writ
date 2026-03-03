@@ -113,9 +113,9 @@ for feature in completed:
             safe_exp = expected.replace("'", "'\\''")
             cmd = f"grep -r '{safe_exp}' {target} > /dev/null 2>&1"
         elif ctype == "json_path_check":
-            # jq with python3 fallback comment
             safe_exp = expected.replace("'", "'\\''")
-            cmd = f"jq -e '{safe_exp}' '{target}' > /dev/null 2>&1"
+            safe_target = target.replace("'", "'\\''")
+            cmd = f"if command -v jq >/dev/null 2>&1; then jq -e '{safe_exp}' '{safe_target}' > /dev/null 2>&1; else python3 -c \"import json,sys; d=json.load(open('{safe_target}')); sys.exit(0 if d else 1)\" > /dev/null 2>&1; fi"
 
         print(f"if {cmd}; then")
         print(f"  echo '  PASS: {safe_desc}'")

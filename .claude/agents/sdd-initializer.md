@@ -62,6 +62,7 @@ For each feature, define acceptance criteria using these types ONLY:
 | `command_succeeds` | Shell command | "" |
 | `test_passes` | Test command (with flags to target this feature) | "" |
 | `grep_match` | Directory path or glob | Pattern to search for |
+| `json_path_check` | JSON file path | jq filter expression |
 
 Criteria must be mechanically verifiable - no subjective assessments.
 

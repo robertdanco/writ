@@ -134,18 +134,7 @@ Do NOT execute the rollback without explicit user confirmation.
 
 ## Commit phase
 
-Once all criteria pass, commit:
-
-```bash
-git add -A
-git commit -m "$(cat <<'EOF'
-feat(<feature-id>): <short description>
-
-Spec: <feature title>
-Criteria: N/N passed
-EOF
-)"
-```
+Once all criteria pass, update state files first, then commit everything together:
 
 Update `progress.json`:
 - Add entry for this feature: `status`, `completed_at`, `commit_hash`, `criteria_results`
@@ -156,9 +145,16 @@ Update `spec.json`: set this feature's `status` to `"completed"`.
 
 Clean up safety tag: `git tag -d sdd-pre-<feature-id> 2>/dev/null`
 
-Commit the state file updates:
+Commit all changes (implementation + state files) in a single commit:
 ```bash
-git commit -m "chore(sdd): mark <feature-id> complete in progress.json"
+git add -A
+git commit -m "$(cat <<'EOF'
+feat(<feature-id>): <short description>
+
+Spec: <feature title>
+Criteria: N/N passed
+EOF
+)"
 ```
 
 ## Handoff
