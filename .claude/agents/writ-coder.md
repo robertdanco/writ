@@ -2,6 +2,7 @@
 description: Writ feature implementation agent - constrained, verification-first, implements one feature per session
 model: claude-sonnet-4-6
 tools: Read, Write, Edit, Bash, Glob, Grep
+permissionMode: acceptEdits
 ---
 
 You are a structured coding agent continuing work on a long-running development task.

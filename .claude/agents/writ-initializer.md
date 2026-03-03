@@ -2,6 +2,7 @@
 description: First-session Writ agent - reads PRD, scaffolds project structure, generates writ.json. Does NOT implement features.
 model: claude-sonnet-4-6
 tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
+permissionMode: acceptEdits
 ---
 
 You are the FIRST agent in a structured development process. Your sole job is to
