@@ -1,12 +1,20 @@
 ---
-description: Evaluate acceptance criteria for a feature or all features
+description: Evaluate acceptance criteria for a feature or all features. Supports --all (regression check), --pending (discriminative check), or a feature ID.
 allowed-tools: Read, Glob, Grep, Bash
 ---
 
 Evaluate acceptance criteria from `spec.json` for the feature(s) specified in $ARGUMENTS.
 
-- If $ARGUMENTS is a feature ID: evaluate that feature only.
-- If $ARGUMENTS is `--all`: evaluate all features whose status is not `pending`.
+$ARGUMENTS must be one of:
+- A feature ID: evaluate that feature only (normal pass/fail).
+- `--all`: evaluate all features whose status is not `pending` (regression check).
+- `--pending`: **discriminative check** - evaluate all pending features. Invert pass/fail
+  semantics: a criterion that PASSES is flagged as WEAK (it passes on unimplemented code).
+  A criterion that FAILS is correct. Do NOT run this as a normal evaluation.
+- empty: same as `--all`.
+
+**IMPORTANT**: `--pending` uses inverted semantics. Do not evaluate pending features using
+normal pass/fail. See step 4 for the required output format.
 
 ## Instructions
 
@@ -34,30 +42,53 @@ that must return truthy (e.g., `.version == "1.0.0"`, `.dependencies.react != nu
 and report summaries only. If you must log output, write to a temp file:
 `<command> > /tmp/sdd-verify-output.txt 2>&1; echo $?`
 
-4. For each feature, output a structured result:
+4. For each feature, output a structured result.
 
-```
-Feature: <feature-id> - <title>
-Status: PASS (N/N) | PARTIAL (N/M) | FAIL (0/N)
+   **Normal mode** (`--all` or feature ID):
+   ```
+   Feature: <feature-id> - <title>
+   Status: PASS (N/N) | PARTIAL (N/M) | FAIL (0/N)
 
-  [PASS] <criterion description>
-  [FAIL] <criterion description>
-  ...
-```
+     [PASS] <criterion description>
+     [FAIL] <criterion description>
+     ...
+   ```
 
-5. After all features, output an overall summary:
+   **`--pending` mode** (discriminative check):
+   ```
+   Feature: <feature-id> - <title>
+     [OK - fails]     <criterion description>
+     [WEAK - passes]  <criterion description>  ← passes on empty codebase, criterion is too weak
+     ...
+   ```
 
-```
-=== Verification Summary ===
-PASSED: N features
-FAILED: M features
-BLOCKED: list feature IDs that failed
-```
+5. After all features, output an overall summary.
 
-6. If --all was specified and any feature fails, output:
-```
-REGRESSION DETECTED: Do not start new features until failures are resolved.
-```
+   **Normal mode:**
+   ```
+   === Verification Summary ===
+   PASSED: N features
+   FAILED: M features
+   BLOCKED: list feature IDs that failed
+   ```
+
+   **`--pending` mode:**
+   ```
+   === Discriminative Check Summary ===
+   Features checked: N
+   Weak criteria found: M
+   <If M > 0:>
+   WEAK CRITERIA (pass on empty codebase - strengthen before implementing):
+     <feature-id> #<n>: <criterion description>
+     ...
+   <If M == 0:>
+   All criteria correctly fail on empty codebase. Criteria are discriminative.
+   ```
+
+6. If `--all` was specified and any feature fails, output:
+   ```
+   REGRESSION DETECTED: Do not start new features until failures are resolved.
+   ```
 
 ## Rules
 

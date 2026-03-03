@@ -12,6 +12,11 @@ Read all three state sources in parallel:
 - `progress.json` (full contents)
 - `git log --oneline -20` (recent history)
 
+Check for leftover safety tags from previous sessions:
+`git tag -l 'sdd-pre-*'`
+If any exist, note: "Found stale safety tag(s) from a previous session.
+Clean up with `git tag -d <tag-name>`."
+
 If `spec.json` does not exist, output:
 ```
 No spec.json found. Run /sdd-ingest <prd-file> to generate one first,
@@ -101,9 +106,9 @@ Files to modify:
 Approach:
   <2-4 sentences describing the implementation strategy>
 
-Estimated criteria coverage:
+Criteria coverage (every criterion must be mapped):
   - Criterion 1: will pass after <specific change>
-  - Criterion 2: will pass after <specific change>
+  - Criterion 2: already satisfied - <brief explanation>
   ...
 ```
 
@@ -124,6 +129,9 @@ Implement only what is required to pass the acceptance criteria. Do not:
 
 The spec is the contract. Pass the criteria. Nothing more.
 </anti_overengineering>
+
+Create a safety tag before writing any code:
+`git tag sdd-pre-<feature-id>`
 
 Update `spec.json` to set this feature's status to `"in_progress"` before coding.
 
@@ -151,12 +159,16 @@ Options:
 1. Continue debugging (describe what you want to try)
 2. Revert changes and revisit the spec
 3. Mark as blocked and move to next feature
+4. Revert to pre-session state
+   (will run `git reset --hard sdd-pre-<feature-id>` after your confirmation)
 ```
 Wait for user guidance.
 
 ## Step 7: Commit
 
 Run `/sdd-commit <feature-id>` to create the structured commit and update state files.
+
+Clean up safety tag: `git tag -d sdd-pre-<feature-id> 2>/dev/null`
 
 ## Step 8: Suggest next session
 

@@ -52,6 +52,7 @@ your-project/
 │   └── sdd-loop.sh              # Autonomous session runner
 └── .claude/
     ├── commands/
+    │   ├── sdd-introspect.md    # /sdd-introspect - Brownfield codebase analysis
     │   ├── sdd-ingest.md        # /sdd-ingest - PRD to spec.json
     │   ├── sdd-status.md        # /sdd-status - Progress dashboard
     │   ├── sdd-plan.md          # /sdd-plan - Preview plan without executing
@@ -92,6 +93,20 @@ claude
 # Begin implementation
 ```
 
+### Option C: You have an existing codebase (no PRD)
+
+```
+cd your-project
+claude
+
+/sdd-introspect
+# Claude scans the codebase, discovers existing features, generates spec.json
+# All discovered features are cataloged as "completed" (the baseline)
+
+/sdd-ingest prd.md    # optional: add new features on top of the baseline
+/sdd-session          # start implementing pending features
+```
+
 ## The 5-phase session protocol
 
 Every `/sdd-session` follows this loop:
@@ -103,6 +118,28 @@ Every `/sdd-session` follows this loop:
 5. **Commit** - Create structured commit, update progress.json.
 
 ## Commands
+
+### `/sdd-introspect`
+
+Brownfield codebase analysis. Discovers existing features from code, tests, and docs and
+generates `spec.json` + `progress.json` that establish a verified baseline under SDD governance.
+
+Six-phase process:
+1. **Reconnaissance** - scans project structure and detects archetype (HTTP server, CLI, library, frontend, monorepo)
+2. **Feature discovery** - archetype-driven: routes grouped by resource, CLI commands, public exports, or pages
+3. **Behavioral scenarios** - derives "when I do X, I expect Y" from reading source code
+4. **Criteria generation** - generates 3-7 verifiable criteria per feature with confidence indicators (HIGH/MEDIUM/LOW)
+5. **Baseline verification** - runs all criteria mechanically; interactive resolution for any failures
+6. **Output** - writes `spec.json` (all discovered features as `completed`) and `progress.json`
+
+Three mandatory user checkpoints: feature list, behavioral scenarios, and criteria review.
+
+All brownfield features are written as `status: "completed"` so that:
+- `/sdd-verify --all` includes them in regression checks
+- `/sdd-session` skips them during feature selection
+- `sdd-loop.sh` counts them correctly in progress.json
+
+Use `/sdd-ingest` afterward (merge mode) to add new features on top of the baseline.
 
 ### `/sdd-status`
 

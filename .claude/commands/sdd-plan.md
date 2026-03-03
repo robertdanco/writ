@@ -86,6 +86,11 @@ Edge cases to handle:
   - <edge case and how you'd address it>
   ...
 
+Criteria coverage (every criterion must be mapped):
+  - Criterion 1: will pass after <specific change>
+  - Criterion 2: already satisfied - <brief explanation>
+  ...
+
 Estimated complexity: <Low / Medium / High>
 Reason: <brief justification>
 

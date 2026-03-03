@@ -48,21 +48,17 @@ current feature.
 Your context window will be automatically compacted as it approaches its
 limit. Do not stop tasks early due to token concerns. Always write progress
 to progress.json before the session ends so the next session can resume
-cleanly.
+cleanly. When compacted, the summary should preserve: files changed,
+architectural decisions, unresolved bugs, test results, and the current
+spec.json feature being implemented.
 </context_management>
+
+<investigate_before_answering>
+Always read relevant files before proposing changes. Never speculate about
+code you have not inspected.
+</investigate_before_answering>
 
 ## Build and test commands
 
-<!-- Fill in your project's commands after running init.sh -->
-- Build: `<build command>`
-- Test: `<test command>`
-- Start: `<start command>`
-
-## Commit message format
-
-```
-feat(<feature-id>): <short description>
-
-Spec: <feature title>
-Criteria: N/M passed
-```
+<!-- Fill in after running init.sh -->
+- Build/Test/Start: `<commands>`

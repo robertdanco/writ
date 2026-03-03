@@ -63,7 +63,8 @@ Update spec.json: set this feature's status to `"in_progress"`.
 Generate a concrete implementation plan:
 - List every file to create or modify
 - Describe the specific change to each file
-- Map each change to the acceptance criterion it satisfies
+- Map each change to the acceptance criterion it satisfies. Every criterion
+  must appear - note "already satisfied" for criteria that pass without changes.
 - Note any edge cases the spec requires handling
 
 Output the plan and wait for user confirmation before writing any code.
@@ -90,6 +91,9 @@ DO:
 - Use the simplest implementation that works
 </anti_overengineering>
 
+Create a safety tag before writing any code:
+`git tag sdd-pre-<feature-id>`
+
 Implement the feature. Make targeted changes only.
 
 ## Verification phase
@@ -114,6 +118,9 @@ If any criterion fails:
 4. Retry up to 3 times total
 
 After 3 failures, report the specific failing criterion and your diagnosis. Ask for guidance.
+Include this option:
+- Revert to pre-session state (`git reset --hard sdd-pre-<feature-id>`)
+Do NOT execute the rollback without explicit user confirmation.
 
 ## Commit phase
 
@@ -136,6 +143,8 @@ Update `progress.json`:
 - Set `next_recommended` to the next eligible pending feature
 
 Update `spec.json`: set this feature's `status` to `"completed"`.
+
+Clean up safety tag: `git tag -d sdd-pre-<feature-id> 2>/dev/null`
 
 Commit the state file updates:
 ```bash
