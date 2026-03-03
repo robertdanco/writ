@@ -16,3 +16,10 @@ writ-loop.log
 
 # Local-only reference docs (not for version control)
 references/
+
+# Local developer settings (permissions, etc.)
+.claude/settings.local.json
+
+# Environment files
+.env
+.env*
