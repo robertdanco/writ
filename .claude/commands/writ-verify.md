@@ -3,7 +3,7 @@ description: Evaluate acceptance criteria for a feature or all features. Support
 allowed-tools: Read, Glob, Grep, Bash
 ---
 
-Evaluate acceptance criteria from `spec.json` for the feature(s) specified in $ARGUMENTS.
+Evaluate acceptance criteria from `writ.json` for the feature(s) specified in $ARGUMENTS.
 
 $ARGUMENTS must be one of:
 - A feature ID: evaluate that feature only (normal pass/fail).
@@ -18,7 +18,7 @@ normal pass/fail. See step 4 for the required output format.
 
 ## Instructions
 
-1. Read `spec.json`. If it does not exist, output "ERROR: spec.json not found" and stop.
+1. Read `writ.json`. If it does not exist, output "ERROR: writ.json not found" and stop.
 
 2. Identify which features to evaluate based on $ARGUMENTS.
 
@@ -40,7 +40,7 @@ that must return truthy (e.g., `.version == "1.0.0"`, `.dependencies.react != nu
 
 **CRITICAL**: Never dump full test output into the response. Run commands, capture exit codes,
 and report summaries only. If you must log output, write to a temp file:
-`<command> > /tmp/sdd-verify-output.txt 2>&1; echo $?`
+`<command> > /tmp/writ-verify-output.txt 2>&1; echo $?`
 
 4. For each feature, output a structured result.
 

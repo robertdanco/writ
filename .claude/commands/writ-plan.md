@@ -4,22 +4,22 @@ allowed-tools: Read, Glob, Grep, Bash
 ---
 
 Generate a concrete implementation plan for the next feature without writing any code.
-Use this to preview what /sdd-session would do, check feasibility, or review approach
+Use this to preview what /writ-session would do, check feasibility, or review approach
 before committing to a full session.
 
 ## Step 1: Load state
 
-Read `spec.json` + `progress.json` + `git log --oneline -10`.
+Read `writ.json` + `progress.json` + `git log --oneline -10`.
 
-If `spec.json` does not exist, output:
-"No spec.json found. Run /sdd-ingest first." and stop.
+If `writ.json` does not exist, output:
+"No writ.json found. Run /writ-ingest first." and stop.
 
 ## Step 2: Select feature
 
-Use the same selection logic as /sdd-session:
+Use the same selection logic as /writ-session:
 1. Any feature with status `in_progress` (would resume this first)
 2. Highest-priority `pending` feature whose `depends_on` are all `completed`
-3. If multiple tie on priority, first in spec.json order
+3. If multiple tie on priority, first in writ.json order
 
 If $ARGUMENTS contains a feature ID, plan for that feature instead (validate it exists
 and its dependencies are met first).
@@ -107,11 +107,11 @@ Potential risks:
 
 ## Step 6: Stop
 
-Do NOT write any code. Do NOT modify any files. Do NOT update spec.json or progress.json.
+Do NOT write any code. Do NOT modify any files. Do NOT update writ.json or progress.json.
 
 Output:
 ```
 Plan complete.
-To implement: /sdd-session <feature-id>
-To verify only: /sdd-verify <feature-id>
+To implement: /writ-session <feature-id>
+To verify only: /writ-verify <feature-id>
 ```

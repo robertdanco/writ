@@ -1,0 +1,9 @@
+# Copy to .github/workflows/writ-checks.yml
+name: Writ Acceptance Checks
+on: [push, pull_request]
+jobs:
+  writ:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/writ-export-checks.sh | bash

@@ -8,8 +8,8 @@ Thumbs.db
 *.swp
 *.swo
 
-# Logs produced by sdd-loop.sh
-sdd-loop.log
+# Logs produced by writ-loop.sh
+writ-loop.log
 
 # Test installs (don't commit these)
 /tmp/

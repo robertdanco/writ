@@ -3,17 +3,17 @@ description: Show project progress dashboard - features completed, pending, bloc
 allowed-tools: Read, Bash, Glob, Grep
 ---
 
-Display a progress dashboard for the current SDD project. Does not modify any files.
+Display a progress dashboard for the current Writ project. Does not modify any files.
 
 ## Instructions
 
-1. Read `spec.json`. If not found, output "No spec.json found. Run /sdd-ingest first." and stop.
+1. Read `writ.json`. If not found, output "No writ.json found. Run /writ-ingest first." and stop.
 
 2. Read `progress.json`. If not found, treat all features as having no recorded sessions.
 
 3. Run `git log --oneline -5 2>/dev/null || echo "(no commits)"` to get recent history.
 
-4. Compute the following from spec.json:
+4. Compute the following from writ.json:
    - Total feature count
    - Count by status: completed, in_progress, pending, blocked
    - Count by priority tier
@@ -54,7 +54,7 @@ Completed (<N> total):
   <list feature-ids, 5 per line>
 ═══════════════════════════════════════════════════
 Next up: <feature-id> - <title>
-Run /sdd-session to continue.
+Run /writ-session to continue.
 ```
 
 Progress bar: use `█` for filled, `░` for empty, 20 chars wide.
@@ -78,4 +78,4 @@ Run: git log --oneline to review committed work.
 - Do not modify any files.
 - If progress.json has no entry for a feature, omit it from session counts.
 - Priority tiers: P1 = priority 1, P2 = priority 2, P3-5 = priority 3, 4, or 5.
-- Sort "Ready to implement" by priority ascending, then by spec.json order.
+- Sort "Ready to implement" by priority ascending, then by writ.json order.

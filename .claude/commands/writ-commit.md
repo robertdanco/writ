@@ -1,5 +1,5 @@
 ---
-description: Create atomic commit for a verified feature and update progress.json
+description: Create atomic commit for a verified feature and update progress.json (writ-commit)
 allowed-tools: Read, Bash, Write, Edit
 ---
 
@@ -7,12 +7,12 @@ Create a structured git commit for the feature ID in $ARGUMENTS, then update sta
 
 ## Pre-flight check
 
-1. Read `spec.json` and find the feature matching $ARGUMENTS. If not found, output
-   "ERROR: Feature '<id>' not found in spec.json" and stop.
+1. Read `writ.json` and find the feature matching $ARGUMENTS. If not found, output
+   "ERROR: Feature '<id>' not found in writ.json" and stop.
 
 2. Read `progress.json`. Check whether verification has been run for this feature
    in the current session. If the feature has no passing criteria recorded, warn:
-   "WARNING: No verification results found for this feature. Run /sdd-verify first."
+   "WARNING: No verification results found for this feature. Run /writ-verify first."
    Ask user to confirm before proceeding.
 
 3. Count how many acceptance criteria passed in the most recent verify run.
@@ -44,10 +44,10 @@ Create a structured git commit for the feature ID in $ARGUMENTS, then update sta
    }
    ```
 
-5. **REQUIRED** - Update `spec.json`: find the feature with matching `id` and set its
+5. **REQUIRED** - Update `writ.json`: find the feature with matching `id` and set its
    `status` field to `"completed"`. This must be done even if the feature was previously
    marked `in_progress`. Only modify the `status` field, leave all other fields unchanged.
-   Verify with: `python3 -c "import json; s=json.load(open('spec.json')); print([f['status'] for f in s['features'] if f['id']=='<feature-id>'])"` — must show `['completed']`.
+   Verify with: `python3 -c "import json; s=json.load(open('writ.json')); print([f['status'] for f in s['features'] if f['id']=='<feature-id>'])"` - must show `['completed']`.
 
 6. If `progress.md` exists, append a one-line entry:
    ```

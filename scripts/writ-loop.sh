@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# sdd-loop.sh - Run SDD sessions autonomously until all features complete
-# Usage: ./sdd-loop.sh [--confirm] [--max-sessions N] [project-dir]
+# writ-loop.sh - Run Writ sessions autonomously until all features complete
+# Usage: ./writ-loop.sh [--confirm] [--max-sessions N] [project-dir]
 #
 # By default runs in dry-run mode. Pass --confirm to actually execute.
 # Pattern from Anthropic's C compiler case study (16 parallel agents, $20K, 100K LOC in 2 weeks).
@@ -11,7 +11,7 @@ set -euo pipefail
 CONFIRM=false
 MAX_SESSIONS=""
 PROJECT_DIR="$(pwd)"
-LOG_FILE="sdd-loop.log"
+LOG_FILE="writ-loop.log"
 
 # --- Parse args ---
 while [[ $# -gt 0 ]]; do
@@ -42,15 +42,15 @@ log() {
 }
 
 # --- Validate ---
-if [ ! -f "$PROJECT_DIR/spec.json" ]; then
-  err "No spec.json found in $PROJECT_DIR"
-  err "Run /sdd-ingest first to generate a spec, then use sdd-loop."
+if [ ! -f "$PROJECT_DIR/writ.json" ]; then
+  err "No writ.json found in $PROJECT_DIR"
+  err "Run /writ-ingest first to generate a spec, then use writ-loop."
   exit 1
 fi
 
 # Count pending features using python (avoids jq dependency)
 count_completed() {
-  # Read from progress.json (authoritative) not spec.json (may lag behind)
+  # Read from progress.json (authoritative) not writ.json (may lag behind)
   python3 -c "
 import json, os
 p_file = '$PROJECT_DIR/progress.json'
@@ -71,7 +71,7 @@ else:
 count_pending() {
   python3 -c "
 import json, os
-s_file = '$PROJECT_DIR/spec.json'
+s_file = '$PROJECT_DIR/writ.json'
 p_file = '$PROJECT_DIR/progress.json'
 with open(s_file) as f:
     spec = json.load(f)
@@ -91,7 +91,7 @@ print(total - completed)
 get_project_name() {
   python3 -c "
 import json
-with open('$PROJECT_DIR/spec.json') as f:
+with open('$PROJECT_DIR/writ.json') as f:
     spec = json.load(f)
 print(spec.get('project', 'unknown'))
 " 2>/dev/null || echo "unknown"
@@ -109,7 +109,7 @@ fi
 
 # --- Dry-run preview ---
 echo ""
-echo "SDD Autonomous Loop"
+echo "Writ Autonomous Loop"
 echo "==================="
 echo "Project:      $PROJECT"
 echo "Directory:    $PROJECT_DIR"
@@ -130,7 +130,7 @@ fi
 
 # --- Safety checks ---
 if [ ! -d "$PROJECT_DIR/.git" ]; then
-  err "No git repository found. SDD requires git for state management."
+  err "No git repository found. Writ requires git for state management."
   exit 1
 fi
 
@@ -145,7 +145,7 @@ if [ -n "$GIT_STATUS" ]; then
   echo ""
   read -r -p "Continue anyway? (y/N) " REPLY
   if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
-    info "Aborted. Commit or stash changes before running sdd-loop."
+    info "Aborted. Commit or stash changes before running writ-loop."
     exit 1
   fi
 fi
@@ -154,7 +154,7 @@ fi
 SESSION=0
 PROGRESS_MADE=true
 
-log "=== SDD loop started: project=$PROJECT, pending=$PENDING, max=$MAX_SESSIONS ==="
+log "=== Writ loop started: project=$PROJECT, pending=$PENDING, max=$MAX_SESSIONS ==="
 
 while [ "$SESSION" -lt "$MAX_SESSIONS" ] && [ "$PROGRESS_MADE" = true ]; do
   SESSION=$((SESSION + 1))
@@ -165,7 +165,7 @@ while [ "$SESSION" -lt "$MAX_SESSIONS" ] && [ "$PROGRESS_MADE" = true ]; do
 
   # Run session in project directory
   # --dangerously-skip-permissions avoids interactive prompts in non-interactive mode
-  if ! (cd "$PROJECT_DIR" && claude -p --dangerously-skip-permissions "/sdd-session --auto" 2>>"$PROJECT_DIR/$LOG_FILE"); then
+  if ! (cd "$PROJECT_DIR" && claude -p --dangerously-skip-permissions "/writ-session --auto" 2>>"$PROJECT_DIR/$LOG_FILE"); then
     log "Session $SESSION: claude exited non-zero"
     err "Session $SESSION failed. Check $LOG_FILE for details."
     break
@@ -195,7 +195,7 @@ SESSIONS_RUN=$SESSION
 
 echo ""
 echo "========================="
-echo "  SDD Loop Complete"
+echo "  Writ Loop Complete"
 echo "========================="
 echo "Sessions run:  $SESSIONS_RUN"
 echo "Completed:     $FINAL_COMPLETED features"

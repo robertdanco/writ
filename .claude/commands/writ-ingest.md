@@ -1,9 +1,9 @@
 ---
-description: Two-phase PRD ingestion - parse a PRD into spec.json then expand acceptance criteria
+description: Two-phase PRD ingestion - parse a PRD into writ.json then expand acceptance criteria
 allowed-tools: Read, Glob, Grep, Bash, Write, WebFetch
 ---
 
-Convert the PRD at $ARGUMENTS into a structured `spec.json`. $ARGUMENTS is a file path or URL.
+Convert the PRD at $ARGUMENTS into a structured `writ.json`. $ARGUMENTS is a file path or URL.
 
 ## Phase 1: Parse
 
@@ -19,8 +19,8 @@ Convert the PRD at $ARGUMENTS into a structured `spec.json`. $ARGUMENTS is a fil
    - All features, user stories, and functional requirements
    - Any explicit constraints, non-goals, or out-of-scope items
 
-3. Check if `spec.json` already exists. If it does, read it and ask:
-   "spec.json already exists with N features. Merge new features into it, or replace it?"
+3. Check if `writ.json` already exists. If it does, read it and ask:
+   "writ.json already exists with N features. Merge new features into it, or replace it?"
    Wait for user response before proceeding.
 
 4. Decompose the PRD into features at the right granularity:
@@ -31,7 +31,7 @@ Convert the PRD at $ARGUMENTS into a structured `spec.json`. $ARGUMENTS is a fil
    - Flag any feature that would touch 8+ files or need 7+ criteria with
      `[SPLIT?]` - these are likely two features sharing an ID
 
-5. Generate a draft `spec.json` using the schema below. Use kebab-case for feature IDs.
+5. Generate a draft `writ.json` using the schema below. Use kebab-case for feature IDs.
    Order features by logical dependency (dependencies come first). Assign priorities:
    1 = core/foundational, 5 = polish/optional. Mark all status as `"pending"`.
 
@@ -174,9 +174,9 @@ maps directly to one or more `command_succeeds` criteria.
      ...
    Discrimination: <why at least one criterion would FAIL without this feature>
    ```
-   Show all features. Ask: "Any criteria to adjust before writing spec.json?"
+   Show all features. Ask: "Any criteria to adjust before writing writ.json?"
 
-9. After approval, write the complete `spec.json` to the project root.
+9. After approval, write the complete `writ.json` to the project root.
 
 10. If `progress.json` does not exist, create it from the template:
     ```json
@@ -184,7 +184,7 @@ maps directly to one or more `command_succeeds` criteria.
       "last_session": {
         "date": "",
         "feature_id": "",
-        "summary": "spec.json created via /sdd-ingest",
+        "summary": "writ.json created via /writ-ingest",
         "next_recommended": "<id of first priority-1 feature>"
       }
     }
@@ -192,6 +192,6 @@ maps directly to one or more `command_succeeds` criteria.
 
 11. Output:
     ```
-    spec.json written: N features, M total acceptance criteria
-    Next: Run /sdd-session to begin implementation
+    writ.json written: N features, M total acceptance criteria
+    Next: Run /writ-session to begin implementation
     ```

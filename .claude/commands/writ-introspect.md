@@ -1,16 +1,16 @@
 ---
-description: Brownfield codebase analysis - discover existing features and generate spec.json for SDD governance
+description: Brownfield codebase analysis - discover existing features and generate writ.json for Writ governance
 allowed-tools: Read, Glob, Grep, Bash, Write
 ---
 
-Analyze the existing codebase and generate `spec.json` + `progress.json` that catalog what already works, enabling SDD governance over an established project.
+Analyze the existing codebase and generate `writ.json` + `progress.json` that catalog what already works, enabling Writ governance over an established project.
 
 ## Phase 1: Reconnaissance (read-only)
 
 ### Step 1: Check existing state
 
-Read `spec.json` if it exists. If it has features, ask:
-"spec.json already exists with N features. Merge introspected features (preserving existing), replace, or abort?"
+Read `writ.json` if it exists. If it has features, ask:
+"writ.json already exists with N features. Merge introspected features (preserving existing), replace, or abort?"
 Wait for user response before proceeding.
 
 ### Step 2: Scan project structure
@@ -132,13 +132,14 @@ criteria generation. Do not guess - ask.
 
 ### Step 9: Generate criteria per feature
 
-Rules (same as sdd-ingest):
+Rules (same as writ-ingest):
 - Every feature MUST have at least one behavioral criterion (`command_succeeds` or `test_passes`)
 - If the project has a linter or formatter configured, include a
   `command_succeeds` criterion running the lint command on every feature
   that creates or modifies source files.
 - If existing tests cover the feature, include `test_passes` pointing at them
 - For HTTP servers, use the lifecycle pattern: `bash -c "<start> & sleep 2 && <check> ; kill %1"`
+
 - 3-7 criteria per feature
 - Be specific: actual file paths, real endpoint names, concrete values
 
@@ -173,7 +174,7 @@ Wait for user response.
 
 ### Step 10: Run every criterion mechanically
 
-Evaluate each criterion using the same logic as sdd-verify:
+Evaluate each criterion using the same logic as writ-verify:
 
 | Criterion type | Verification method |
 |---|---|
@@ -184,7 +185,7 @@ Evaluate each criterion using the same logic as sdd-verify:
 | `grep_match` | `grep -r "<expected>" <target> > /dev/null 2>&1 && echo PASS \|\| echo FAIL` |
 | `json_path_check` | `jq -e '<expected>' '<target>' > /dev/null 2>&1 && echo PASS \|\| echo FAIL` |
 
-Do not dump full command output. Write verbose output to `/tmp/sdd-introspect-verify.txt` if needed.
+Do not dump full command output. Write verbose output to `/tmp/writ-introspect-verify.txt` if needed.
 
 Report results per feature:
 ```
@@ -206,7 +207,7 @@ Feature <id> has N failing criteria:
 Options:
   1. Fix the criterion (the command is wrong - let me correct it)
   2. Drop the failing criterion (keep feature with remaining criteria)
-  3. Exclude this feature entirely (add later via /sdd-ingest)
+  3. Exclude this feature entirely (add later via /writ-ingest)
   4. Mark this feature as "pending" instead of "completed"
 ```
 
@@ -214,7 +215,7 @@ Wait for user choice per failing feature. Apply corrections and re-verify if opt
 
 ## Phase 6: Write Output
 
-### Step 12: Write spec.json
+### Step 12: Write writ.json
 
 All features passing verification get `status: "completed"`.
 Features the user chose to mark pending get `status: "pending"`.
@@ -227,6 +228,7 @@ Assign priorities 1-5:
 Build `depends_on` from import relationships and middleware chains observed during discovery.
 
 Use the project name from the package manifest or README. Set `version: "1.0.0"` and `created_at` to current ISO timestamp.
+
 
 ### Step 13: Write progress.json
 
@@ -248,14 +250,14 @@ Entry format for brownfield features:
 }
 ```
 
-`sessions: 0` and empty `started_at` mark these as pre-existing, not SDD-built.
+`sessions: 0` and empty `started_at` mark these as pre-existing, not Writ-built.
 
 Set `last_session`:
 ```json
 "last_session": {
   "date": "<ISO timestamp>",
   "feature_id": "",
-  "summary": "Baseline established via /sdd-introspect: N features cataloged",
+  "summary": "Baseline established via /writ-introspect: N features cataloged",
   "next_recommended": "<first pending feature id, or empty if none>"
 }
 ```
@@ -265,7 +267,7 @@ If `progress.json` already exists (merge mode), add entries for new features onl
 ### Step 14: Append to progress.md
 
 If `progress.md` exists, append one line:
-`- [<YYYY-MM-DD>] BASELINE: N features introspected via /sdd-introspect`
+`- [<YYYY-MM-DD>] BASELINE: N features introspected via /writ-introspect`
 
 ### Step 15: Output summary
 
@@ -283,24 +285,24 @@ Features cataloged: N
 Abandoned work noted: M items (not in spec)
 
 Files written:
-  spec.json    - N features
+  writ.json    - N features
   progress.json - X entries
 
 Next steps:
-  /sdd-verify --all      Confirm full baseline
-  /sdd-ingest <prd>      Add new features (merge mode)
-  /sdd-session            Start implementing pending features
+  /writ-verify --all      Confirm full baseline
+  /writ-ingest <prd>      Add new features (merge mode)
+  /writ-session            Start implementing pending features
 ```
 
 ## Edge case handling
 
 | Case | Behavior |
 |------|----------|
-| Empty or skeleton codebase (< 2 features found) | Report "Too few features to introspect. Use /sdd-ingest or the sdd-initializer agent instead." Stop. |
+| Empty or skeleton codebase (< 2 features found) | Report "Too few features to introspect. Use /writ-ingest or the writ-initializer agent instead." Stop. |
 | Monorepo | Ask which service at Step 4. Scope discovery to that subtree. |
 | No tests at all | Generate only `command_succeeds` + `file_exists` criteria. Note the absence in the summary. |
 | Extensive tests, no docs | Use test describe/it block hierarchy as the primary feature source. |
 | Library with no entry point | Use `test_passes` + `file_contains` (export checks). No `command_succeeds` criteria. |
 | Frontend / static site | Use build output verification: `npm run build && test -f dist/index.html` |
-| Half-implemented feature | Exclude by default. Report as "partial - consider adding via /sdd-ingest after completing." |
+| Half-implemented feature | Exclude by default. Report as "partial - consider adding via /writ-ingest after completing." |
 | Abandoned code (TODO, commented-out) | Report but do not generate features. |

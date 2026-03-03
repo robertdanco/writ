@@ -1,6 +1,6 @@
-# SDD: Spec-Driven Development for Claude Code
+# Writ: Structured Development for Claude Code
 
-A reusable harness that turns Claude Code into a spec-driven development system
+A reusable harness that turns Claude Code into a structured development system
 using only native primitives: CLAUDE.md, slash commands, agent definitions, and git.
 
 No custom infrastructure. No external orchestrators.
@@ -8,34 +8,34 @@ No custom infrastructure. No external orchestrators.
 ## Install
 
 ```bash
-git clone https://github.com/robertdanco/sdd /path/to/sdd
+git clone https://github.com/robertdanco/writ /path/to/writ
 ```
 
 Then install into any project:
 
 ```bash
 cd your-project
-/path/to/sdd/init.sh
+/path/to/writ/init.sh
 ```
 
 Or install into a specific directory without cd-ing first:
 
 ```bash
-/path/to/sdd/init.sh /path/to/your/project
+/path/to/writ/init.sh /path/to/your/project
 ```
 
-**Recommended: add an alias** so you can run `sdd-init` from anywhere:
+**Recommended: add an alias** so you can run `writ-init` from anywhere:
 
 ```bash
 # Add to ~/.zshrc or ~/.bashrc
-export SDD_HOME="/path/to/sdd"
-alias sdd-init="$SDD_HOME/init.sh"
+export WRIT_HOME="/path/to/writ"
+alias writ-init="$WRIT_HOME/init.sh"
 ```
 
 Then:
 ```bash
 cd your-project
-sdd-init
+writ-init
 ```
 
 The installer is idempotent - safe to re-run.
@@ -44,25 +44,25 @@ The installer is idempotent - safe to re-run.
 
 ```
 your-project/
-├── CLAUDE.md                    # SDD Protocol section appended
-├── spec.json                    # Feature specification (template)
+├── CLAUDE.md                    # Writ Protocol section appended
+├── writ.json                    # Feature specification (template)
 ├── progress.json                # Session state (template)
 ├── progress.md                  # Human-readable progress log (template)
 ├── scripts/
-│   ├── sdd-loop.sh              # Autonomous session runner
-│   └── sdd-export-checks.sh     # CI verification script generator
+│   ├── writ-loop.sh              # Autonomous session runner
+│   └── writ-export-checks.sh     # CI verification script generator
 └── .claude/
     ├── commands/
-    │   ├── sdd-introspect.md    # /sdd-introspect - Brownfield codebase analysis
-    │   ├── sdd-ingest.md        # /sdd-ingest - PRD to spec.json
-    │   ├── sdd-status.md        # /sdd-status - Progress dashboard
-    │   ├── sdd-plan.md          # /sdd-plan - Preview plan without executing
-    │   ├── sdd-session.md       # /sdd-session - Full session orchestrator
-    │   ├── sdd-verify.md        # /sdd-verify - Acceptance criteria check
-    │   └── sdd-commit.md        # /sdd-commit - Atomic commit + state update
+    │   ├── writ-introspect.md    # /writ-introspect - Brownfield codebase analysis
+    │   ├── writ-ingest.md        # /writ-ingest - PRD to writ.json
+    │   ├── writ-status.md        # /writ-status - Progress dashboard
+    │   ├── writ-plan.md          # /writ-plan - Preview plan without executing
+    │   ├── writ-session.md       # /writ-session - Full session orchestrator
+    │   ├── writ-verify.md        # /writ-verify - Acceptance criteria check
+    │   └── writ-commit.md        # /writ-commit - Atomic commit + state update
     └── agents/
-        ├── sdd-initializer.md   # First-session scaffolding agent
-        └── sdd-coder.md         # Feature implementation agent
+        ├── writ-initializer.md   # First-session scaffolding agent
+        └── writ-coder.md         # Feature implementation agent
 ```
 
 ## Quick start
@@ -73,10 +73,10 @@ your-project/
 cd your-project
 claude
 
-/sdd-ingest prd.md
-# Review and approve the generated spec.json
+/writ-ingest prd.md
+# Review and approve the generated writ.json
 
-/sdd-session
+/writ-session
 # Claude implements the first feature, verifies it, and commits
 ```
 
@@ -87,10 +87,10 @@ cd your-project
 claude
 
 # In Claude Code:
-"Use the sdd-initializer agent to set up the project"
-# Claude asks clarifying questions, scaffolds the project, generates spec.json
+"Use the writ-initializer agent to set up the project"
+# Claude asks clarifying questions, scaffolds the project, generates writ.json
 
-/sdd-session
+/writ-session
 # Begin implementation
 ```
 
@@ -100,17 +100,17 @@ claude
 cd your-project
 claude
 
-/sdd-introspect
-# Claude scans the codebase, discovers existing features, generates spec.json
+/writ-introspect
+# Claude scans the codebase, discovers existing features, generates writ.json
 # All discovered features are cataloged as "completed" (the baseline)
 
-/sdd-ingest prd.md    # optional: add new features on top of the baseline
-/sdd-session          # start implementing pending features
+/writ-ingest prd.md    # optional: add new features on top of the baseline
+/writ-session          # start implementing pending features
 ```
 
 ## The 5-phase session protocol
 
-Every `/sdd-session` follows this loop:
+Every `/writ-session` follows this loop:
 
 1. **Explore** - Load state, check for stale safety tags, run regression check.
 2. **Plan** - Structured reconnaissance (project shape, utilities, conventions),
@@ -122,10 +122,10 @@ Every `/sdd-session` follows this loop:
 
 ## Commands
 
-### `/sdd-introspect`
+### `/writ-introspect`
 
 Brownfield codebase analysis. Discovers existing features from code, tests, and docs and
-generates `spec.json` + `progress.json` that establish a verified baseline under SDD governance.
+generates `writ.json` + `progress.json` that establish a verified baseline under Writ governance.
 
 Six-phase process:
 1. **Reconnaissance** - scans project structure and detects archetype (HTTP server, CLI, library, frontend, monorepo)
@@ -133,25 +133,25 @@ Six-phase process:
 3. **Behavioral scenarios** - derives "when I do X, I expect Y" from reading source code
 4. **Criteria generation** - generates 3-7 verifiable criteria per feature with confidence indicators (HIGH/MEDIUM/LOW)
 5. **Baseline verification** - runs all criteria mechanically; interactive resolution for any failures
-6. **Output** - writes `spec.json` (all discovered features as `completed`) and `progress.json`
+6. **Output** - writes `writ.json` (all discovered features as `completed`) and `progress.json`
 
 Three mandatory user checkpoints: feature list, behavioral scenarios, and criteria review.
 
 All brownfield features are written as `status: "completed"` so that:
-- `/sdd-verify --all` includes them in regression checks
-- `/sdd-session` skips them during feature selection
-- `sdd-loop.sh` counts them correctly in progress.json
+- `/writ-verify --all` includes them in regression checks
+- `/writ-session` skips them during feature selection
+- `writ-loop.sh` counts them correctly in progress.json
 
-Use `/sdd-ingest` afterward (merge mode) to add new features on top of the baseline.
+Use `/writ-ingest` afterward (merge mode) to add new features on top of the baseline.
 
-### `/sdd-status`
+### `/writ-status`
 
 Instant project dashboard. Shows total/done/pending/blocked feature counts, progress bar,
 last session summary, next recommended feature, and dependency chain. Read-only.
 
 Use at any time to orient yourself without starting a full session.
 
-### `/sdd-plan [feature-id]`
+### `/writ-plan [feature-id]`
 
 Generate a concrete implementation plan without writing any code. Runs the Explore and
 Plan phases of the 5-phase loop and stops before executing.
@@ -161,39 +161,39 @@ Use this to:
 - Check feasibility of a feature
 - Preview the implementation approach for a complex feature
 
-Output ends with: `"Plan complete. Run /sdd-session <feature-id> to implement."`
+Output ends with: `"Plan complete. Run /writ-session <feature-id> to implement."`
 
-### `/sdd-ingest <file-or-url>`
+### `/writ-ingest <file-or-url>`
 
 Two-phase PRD ingestion:
 - Phase 1: Parse PRD into draft feature list, present for review
 - Phase 2: Expand features with specific, verifiable acceptance criteria
 
-Writes `spec.json` to the project root.
+Writes `writ.json` to the project root.
 
 Ambiguous requirements are marked `[NEEDS CLARIFICATION]` and must be resolved
 before criteria generation. If the project has a linter configured, lint
 criteria are automatically included. Features spanning 8+ files are flagged
 with `[SPLIT?]` for decomposition.
 
-### `/sdd-session [feature-id]`
+### `/writ-session [feature-id]`
 
 Primary entry point for all development. Runs the full 5-phase loop.
 
 Optionally pass a feature ID to work on a specific feature instead of auto-selecting.
 
-### `/sdd-verify <feature-id>` or `/sdd-verify --all`
+### `/writ-verify <feature-id>` or `/writ-verify --all`
 
 Evaluates acceptance criteria mechanically. Does not modify files.
 
 Run `--all` to check all completed features for regressions.
 
-### `/sdd-commit <feature-id>`
+### `/writ-commit <feature-id>`
 
 Creates a structured commit and updates progress.json. Called automatically
-by `/sdd-session` after successful verification.
+by `/writ-session` after successful verification.
 
-## spec.json structure
+## writ.json structure
 
 ```json
 {
@@ -280,45 +280,45 @@ Keyed by feature ID for O(1) lookup and clean git diffs:
 
 ## Agents
 
-### `sdd-initializer`
+### `writ-initializer`
 
-Use for brand-new projects or when no `spec.json` exists yet. Reads a PRD,
-asks clarifying questions, scaffolds the project, generates spec.json, and
+Use for brand-new projects or when no `writ.json` exists yet. Reads a PRD,
+asks clarifying questions, scaffolds the project, generates writ.json, and
 writes `init.sh`. Does NOT implement features.
 
-Invoke from Claude Code: `"Use the sdd-initializer agent to initialize this project"`
+Invoke from Claude Code: `"Use the writ-initializer agent to initialize this project"`
 
-### `sdd-coder`
+### `writ-coder`
 
 The feature implementation agent. Follows the full 5-phase protocol, enforces
 anti-overengineering constraints, and cannot spawn subagents. Use when you want
 to delegate a complete feature implementation as a bounded task.
 
-Invoke from Claude Code: `"Use the sdd-coder agent to implement feature user-auth"`
+Invoke from Claude Code: `"Use the writ-coder agent to implement feature user-auth"`
 
 ## Autonomous mode
 
-Once your spec is solid and your acceptance criteria are reliable, `sdd-loop.sh`
+Once your spec is solid and your acceptance criteria are reliable, `writ-loop.sh`
 runs sessions automatically - the pattern from Anthropic's C compiler case study.
 
 ```bash
 # Dry run - preview what would happen (default)
-bash scripts/sdd-loop.sh
+bash scripts/writ-loop.sh
 
 # Run for real - sessions execute until all features complete or stuck
-bash scripts/sdd-loop.sh --confirm
+bash scripts/writ-loop.sh --confirm
 
 # Cap sessions explicitly
-bash scripts/sdd-loop.sh --confirm --max-sessions 5
+bash scripts/writ-loop.sh --confirm --max-sessions 5
 
 # Target a specific project directory
-bash scripts/sdd-loop.sh --confirm /path/to/project
+bash scripts/writ-loop.sh --confirm /path/to/project
 ```
 
 Exit conditions: all features complete, max sessions reached, no progress detected
 (same pending count before and after a session), or a session fails.
 
-Each session is logged to `sdd-loop.log` with timestamps.
+Each session is logged to `writ-loop.log` with timestamps.
 
 **When to use:** After running a few interactive sessions to validate your criteria
 are reliable. Immature specs with vague criteria will get stuck.
@@ -329,24 +329,24 @@ Export your acceptance criteria as a standalone CI check script:
 
 ```bash
 # Generate a self-contained check script
-bash scripts/sdd-export-checks.sh > ci-checks.sh
+bash scripts/writ-export-checks.sh > ci-checks.sh
 
 # Run it (exits non-zero if any criterion fails)
 bash ci-checks.sh
 ```
 
 The generated script checks all completed features against their criteria
-using the same evaluation logic as `/sdd-verify`. All 6 criterion types are
+using the same evaluation logic as `/writ-verify`. All 6 criterion types are
 supported. Unknown types produce a SKIP warning, not a silent pass.
 
 Use in any CI system:
 ```yaml
 # GitHub Actions example
-- run: bash <(bash scripts/sdd-export-checks.sh)
+- run: bash <(bash scripts/writ-export-checks.sh)
 ```
 
-A starter GitHub Actions workflow is included in `templates/github-actions-sdd.yml`.
-Copy it to `.github/workflows/sdd-checks.yml` to get CI running immediately.
+A starter GitHub Actions workflow is included in `templates/github-actions-writ.yml`.
+Copy it to `.github/workflows/writ-checks.yml` to get CI running immediately.
 
 ## Design principles
 
@@ -364,6 +364,6 @@ documentation. The key ones:
 ## After installation
 
 1. Fill in your build/test/start commands in `CLAUDE.md` under "Build and test commands"
-2. Either run `/sdd-ingest` with your PRD (Option A), use the `sdd-initializer` agent (Option B),
-   or run `/sdd-introspect` to establish a baseline from an existing codebase (Option C)
-3. Run `/sdd-session` for each feature - that's the whole workflow
+2. Either run `/writ-ingest` with your PRD (Option A), use the `writ-initializer` agent (Option B),
+   or run `/writ-introspect` to establish a baseline from an existing codebase (Option C)
+3. Run `/writ-session` for each feature - that's the whole workflow

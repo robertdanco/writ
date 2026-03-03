@@ -1,26 +1,26 @@
 ---
-description: Full SDD session orchestrator - regression check, feature selection, plan, implement, verify, commit
+description: Full Writ session orchestrator - regression check, feature selection, plan, implement, verify, commit
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Agent
 ---
 
-Run a complete SDD development session. This is the primary entry point for all development work.
+Run a complete Writ development session. This is the primary entry point for all development work.
 
 ## Step 1: Load state
 
 Read all three state sources in parallel:
-- `spec.json` (full contents)
+- `writ.json` (full contents)
 - `progress.json` (full contents)
 - `git log --oneline -20` (recent history)
 
 Check for leftover safety tags from previous sessions:
-`git tag -l 'sdd-pre-*'`
+`git tag -l 'writ-pre-*'`
 If any exist, note: "Found stale safety tag(s) from a previous session.
 Clean up with `git tag -d <tag-name>`."
 
-If `spec.json` does not exist, output:
+If `writ.json` does not exist, output:
 ```
-No spec.json found. Run /sdd-ingest <prd-file> to generate one first,
-or use the sdd-initializer agent if starting a brand new project.
+No writ.json found. Run /writ-ingest <prd-file> to generate one first,
+or use the writ-initializer agent if starting a brand new project.
 ```
 Then stop.
 
@@ -33,7 +33,7 @@ Last session: <date> - <feature_id> - <summary>
 
 ## Step 2: Regression check
 
-Run `/sdd-verify --all` before doing anything else.
+Run `/writ-verify --all` before doing anything else.
 
 If any previously-completed feature now fails verification:
 ```
@@ -59,7 +59,7 @@ If all checks pass (or no features are completed yet), continue.
 Find the next feature to implement using these rules in order:
 1. Any feature with status `in_progress` (resume interrupted work first)
 2. The highest-priority `pending` feature whose `depends_on` list is entirely `completed`
-3. If multiple features tie on priority, take the one listed first in spec.json
+3. If multiple features tie on priority, take the one listed first in writ.json
 
 If $ARGUMENTS contains a feature ID, use that feature instead (after validating it exists
 and its dependencies are met).
@@ -139,22 +139,22 @@ The spec is the contract. Pass the criteria. Nothing more.
 </anti_overengineering>
 
 Create a safety tag before writing any code:
-`git tag sdd-pre-<feature-id>`
+`git tag writ-pre-<feature-id>`
 
-Update `spec.json` to set this feature's status to `"in_progress"` before coding.
+Update `writ.json` to set this feature's status to `"in_progress"` before coding.
 
 Implement the feature according to the approved plan. Make targeted, minimal changes.
 
 ## Step 6: Verify
 
-Run `/sdd-verify <feature-id>` after implementation.
+Run `/writ-verify <feature-id>` after implementation.
 
 If all criteria pass: proceed to Step 7.
 
 If some criteria fail:
 - Diagnose the specific failure
 - Make targeted fixes
-- Re-run `/sdd-verify <feature-id>`
+- Re-run `/writ-verify <feature-id>`
 - Repeat up to 3 times total
 
 After 3 failed attempts, output:
@@ -168,15 +168,15 @@ Options:
 2. Revert changes and revisit the spec
 3. Mark as blocked and move to next feature
 4. Revert to pre-session state
-   (will run `git reset --hard sdd-pre-<feature-id>` after your confirmation)
+   (will run `git reset --hard writ-pre-<feature-id>` after your confirmation)
 ```
 Wait for user guidance.
 
 ## Step 7: Commit
 
-Run `/sdd-commit <feature-id>` to create the structured commit and update state files.
+Run `/writ-commit <feature-id>` to create the structured commit and update state files.
 
-Clean up safety tag: `git tag -d sdd-pre-<feature-id> 2>/dev/null`
+Clean up safety tag: `git tag -d writ-pre-<feature-id> 2>/dev/null`
 
 ## Step 8: Suggest next session
 
@@ -190,5 +190,5 @@ Commit: <hash>
 Remaining: <N> features pending
 
 Next recommended: <next-feature-id> - <title>
-  Run /sdd-session to continue.
+  Run /writ-session to continue.
 ```

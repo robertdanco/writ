@@ -7,7 +7,7 @@
     {
       "id": "example-feature",
       "title": "Example Feature",
-      "description": "Description of what this feature does from the user's perspective. Replace with real features via /sdd-ingest.",
+      "description": "Description of what this feature does from the user's perspective. Replace with real features via /writ-ingest.",
       "depends_on": [],
       "priority": 1,
       "status": "pending",

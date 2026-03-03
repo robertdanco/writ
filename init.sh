@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# init.sh - Install SDD into a target project directory
+# init.sh - Install Writ into a target project directory
 # Usage: ./init.sh [target-directory]
 # Safe to re-run (idempotent).
 
@@ -8,7 +8,7 @@ set -euo pipefail
 # --- Config ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="${1:-$(pwd)}"
-SDD_HEADER="# SDD Protocol"
+WRIT_HEADER="# Writ Protocol"
 
 # --- Colors ---
 GREEN='\033[0;32m'
@@ -16,7 +16,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-info()  { echo -e "${BLUE}[sdd]${NC} $1"; }
+info()  { echo -e "${BLUE}[writ]${NC} $1"; }
 ok()    { echo -e "${GREEN}[ok]${NC}  $1"; }
 warn()  { echo -e "${YELLOW}[warn]${NC} $1"; }
 
@@ -26,13 +26,13 @@ if [ ! -d "$TARGET_DIR" ]; then
   exit 1
 fi
 
-if [ ! -f "$SCRIPT_DIR/templates/sdd-protocol.md" ]; then
-  echo "ERROR: SDD harness files not found at $SCRIPT_DIR"
-  echo "Run this script from the sdd harness directory, or provide the correct path."
+if [ ! -f "$SCRIPT_DIR/templates/writ-protocol.md" ]; then
+  echo "ERROR: Writ harness files not found at $SCRIPT_DIR"
+  echo "Run this script from the writ harness directory, or provide the correct path."
   exit 1
 fi
 
-info "Installing SDD into: $TARGET_DIR"
+info "Installing Writ into: $TARGET_DIR"
 
 # --- Create directory structure ---
 mkdir -p "$TARGET_DIR/.claude/commands"
@@ -55,12 +55,12 @@ for agent_file in "$SCRIPT_DIR/.claude/agents/"*.md; do
   ok "Installed agent: .claude/agents/$filename"
 done
 
-# --- Copy spec.json template (skip if exists) ---
-if [ -f "$TARGET_DIR/spec.json" ]; then
-  warn "spec.json already exists - skipping (use /sdd-ingest to update it)"
+# --- Copy writ.json template (skip if exists) ---
+if [ -f "$TARGET_DIR/writ.json" ]; then
+  warn "writ.json already exists - skipping (use /writ-ingest to update it)"
 else
-  cp "$SCRIPT_DIR/templates/spec.json" "$TARGET_DIR/spec.json"
-  ok "Created spec.json template"
+  cp "$SCRIPT_DIR/templates/writ.json" "$TARGET_DIR/writ.json"
+  ok "Created writ.json template"
 fi
 
 # --- Copy progress.json template (skip if exists) ---
@@ -90,11 +90,11 @@ if [ -d "$SCRIPT_DIR/scripts" ]; then
   done
 fi
 
-# --- Append SDD protocol to CLAUDE.md (idempotent) ---
+# --- Append Writ protocol to CLAUDE.md (idempotent) ---
 CLAUDE_MD="$TARGET_DIR/CLAUDE.md"
 
-if [ -f "$CLAUDE_MD" ] && grep -q "^$SDD_HEADER" "$CLAUDE_MD" 2>/dev/null; then
-  warn "CLAUDE.md already contains SDD Protocol section - skipping"
+if [ -f "$CLAUDE_MD" ] && grep -q "^$WRIT_HEADER" "$CLAUDE_MD" 2>/dev/null; then
+  warn "CLAUDE.md already contains Writ Protocol section - skipping"
 else
   # Add a blank line separator if CLAUDE.md already has content
   if [ -f "$CLAUDE_MD" ] && [ -s "$CLAUDE_MD" ]; then
@@ -102,8 +102,8 @@ else
     echo "---" >> "$CLAUDE_MD"
     echo "" >> "$CLAUDE_MD"
   fi
-  cat "$SCRIPT_DIR/templates/sdd-protocol.md" >> "$CLAUDE_MD"
-  ok "Appended SDD Protocol to CLAUDE.md"
+  cat "$SCRIPT_DIR/templates/writ-protocol.md" >> "$CLAUDE_MD"
+  ok "Appended Writ Protocol to CLAUDE.md"
 fi
 
 # --- Initialize git if needed ---
@@ -117,7 +117,7 @@ fi
 # --- Print next steps ---
 echo ""
 echo "======================================"
-echo "  SDD installed successfully"
+echo "  Writ installed successfully"
 echo "======================================"
 echo ""
 echo "Next steps:"
@@ -129,22 +129,22 @@ echo "  2. Open Claude Code in your project:"
 echo "     cd $TARGET_DIR && claude"
 echo ""
 echo "  3a. If you have a PRD or requirements document, run:"
-echo "      /sdd-ingest path/to/your/prd.md"
+echo "      /writ-ingest path/to/your/prd.md"
 echo ""
 echo "  3b. If starting from scratch, use the initializer agent:"
-echo "      \"Use the sdd-initializer agent to set up the project\""
+echo "      \"Use the writ-initializer agent to set up the project\""
 echo ""
 echo "  4. Begin development:"
-echo "      /sdd-status           - check project progress at any time"
-echo "      /sdd-plan             - preview implementation plan without coding"
-echo "      /sdd-session          - run a full implement-verify-commit session"
-echo "      /sdd-session <id>     - run a session for a specific feature"
+echo "      /writ-status           - check project progress at any time"
+echo "      /writ-plan             - preview implementation plan without coding"
+echo "      /writ-session          - run a full implement-verify-commit session"
+echo "      /writ-session <id>     - run a session for a specific feature"
 echo ""
 echo "  5. For autonomous mode (after verifying your spec is solid):"
-echo "      bash scripts/sdd-loop.sh               - dry run preview"
-echo "      bash scripts/sdd-loop.sh --confirm     - run autonomously"
+echo "      bash scripts/writ-loop.sh               - dry run preview"
+echo "      bash scripts/writ-loop.sh --confirm     - run autonomously"
 echo ""
 echo "  6. For CI integration:"
-echo "      bash scripts/sdd-export-checks.sh > ci-checks.sh"
-echo "      cp $SCRIPT_DIR/templates/github-actions-sdd.yml .github/workflows/sdd-checks.yml"
+echo "      bash scripts/writ-export-checks.sh > ci-checks.sh"
+echo "      cp $SCRIPT_DIR/templates/github-actions-writ.yml .github/workflows/writ-checks.yml"
 echo ""
