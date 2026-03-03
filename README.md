@@ -345,6 +345,9 @@ Use in any CI system:
 - run: bash <(bash scripts/sdd-export-checks.sh)
 ```
 
+A starter GitHub Actions workflow is included in `templates/github-actions-sdd.yml`.
+Copy it to `.github/workflows/sdd-checks.yml` to get CI running immediately.
+
 ## Design principles
 
 This harness is built on 13 principles synthesized from Anthropic's engineering

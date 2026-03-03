@@ -104,6 +104,9 @@ DO:
 Create a safety tag before writing any code:
 `git tag sdd-pre-<feature-id>`
 
+For any `test_passes` criteria, write the test first and verify it fails before
+writing implementation code. A test that passes before implementation is a weak criterion.
+
 Implement the feature. Make targeted changes only.
 
 ## Verification phase
@@ -142,6 +145,9 @@ Update `progress.json`:
 - Set `next_recommended` to the next eligible pending feature
 
 Update `spec.json`: set this feature's `status` to `"completed"`.
+
+If you made a non-obvious implementation choice, append a one-line entry to
+progress.md's Decisions section: `- [date] <feature-id>: <rationale>`
 
 Clean up safety tag: `git tag -d sdd-pre-<feature-id> 2>/dev/null`
 

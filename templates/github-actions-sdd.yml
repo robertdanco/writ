@@ -1,0 +1,9 @@
+# Copy to .github/workflows/sdd-checks.yml
+name: SDD Acceptance Checks
+on: [push, pull_request]
+jobs:
+  sdd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/sdd-export-checks.sh | bash
