@@ -17,6 +17,12 @@ writ-loop.log
 # Local-only reference docs (not for version control)
 references/
 
+# Claude Code worktrees (parallel development directories)
+.claude/worktrees/
+
+# Local-only Claude instructions (not for version control)
+CLAUDE.md
+
 # Local developer settings (permissions, etc.)
 .claude/settings.local.json
 
