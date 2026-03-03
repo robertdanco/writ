@@ -15,4 +15,4 @@ writ-loop.log
 /tmp/
 
 # Local-only reference docs (not for version control)
-references/anthropic-technical-guidance.md
+references/
