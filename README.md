@@ -162,6 +162,44 @@ A feature in `writ.json` looks like this:
 }
 ```
 
+## Compared to other SDD tools
+
+These choices diverge from what most other spec-driven tools do, for specific reasons.
+
+**Verification method.** Kiro, Copilot Workspace, and BMAD use LLM judgment to
+assess whether code is correct - a QA agent reviews the implementation and decides
+if the feature is done. Models are unreliable at this: they rationalize, tend to
+agree with their own output, and hallucinate passing states. Writ uses exit codes
+only. A criterion either passes or it doesn't.
+
+**Criteria format.** BMAD embeds acceptance criteria in prose story files. GSD
+uses freeform `<verify>` and `<done>` XML tags. Both require the model to
+re-interpret what "verify" means on each run, which means behavior varies. Writ's
+six typed criteria each have exactly one evaluation method - the type determines
+how to check it, with no interpretation step.
+
+**Spec vs. tests.** Superpowers treats the test suite as the acceptance criteria.
+Tests only cover what the developer thought to test, and they verify implementation
+rather than specification. Writ's criteria are written before any code exists, from
+the spec's perspective. They answer "does the feature work as described" rather
+than "does the code pass the tests it was written to pass."
+
+**Commit granularity.** Aider auto-commits every accepted diff. The git history
+becomes noise and you can't bisect to a feature boundary. Cursor and most others
+commit nothing, leaving it to the user. Writ commits once per verified feature -
+the log reads as a feature changelog and stays bisectable.
+
+**State persistence.** Superpowers and Spec Kit have no equivalent to
+`progress.json`. Cross-session continuity depends on the model reading previous
+output or free-form notes, which context compaction doesn't reliably preserve.
+Writ's JSON state is keyed by feature ID and parseable without asking Claude to
+interpret it.
+
+**Surface area.** BMAD has 12+ agent personas and 34+ workflows. More instructions
+mean more chances for the model to lose focus or skip a step. Writ has 5 commands
+and 2 agents. The narrow surface area is intentional - every additional constraint
+in a prompt is a chance for the model to miss it.
+
 ## Commands
 
 | Command | What it does |
