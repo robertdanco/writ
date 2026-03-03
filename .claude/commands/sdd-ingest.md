@@ -28,6 +28,8 @@ Convert the PRD at $ARGUMENTS into a structured `spec.json`. $ARGUMENTS is a fil
    - Each feature should be completable in one session (one context window)
    - If a requirement would take multiple sessions to implement, split it
    - Aim for features that have 3-7 verifiable acceptance criteria
+   - Flag any feature that would touch 8+ files or need 7+ criteria with
+     `[SPLIT?]` - these are likely two features sharing an ID
 
 5. Generate a draft `spec.json` using the schema below. Use kebab-case for feature IDs.
    Order features by logical dependency (dependencies come first). Assign priorities:

@@ -49,11 +49,19 @@ If no eligible feature exists, report this clearly and stop.
 ## Exploration phase
 
 <investigate_before_answering>
-Before writing a single line of code, read the codebase:
-- Use Glob to find files relevant to this feature's domain
-- Use Grep to find existing patterns (how similar things are done elsewhere)
-- Read every file you will modify
-- Read adjacent files to understand conventions (naming, error handling, module structure)
+Before writing a single line of code, run this reconnaissance:
+1. Project shape: Glob for entry points (main/index/app/server) and
+   list top-level source directories
+2. Feature neighborhood: Glob and Grep for files related to this
+   feature's domain (by name and by import/reference)
+3. Shared utilities: Check lib/, utils/, helpers/, shared/, common/
+   for reusable code you should call, not duplicate
+4. Conventions: Read 1-2 existing files in the area you will change
+   to match patterns (naming, error handling, module structure)
+5. File manifest: List every file you will create or modify - read
+   each one before proposing changes
+
+Never propose changes to code you haven't read.
 </investigate_before_answering>
 
 Update spec.json: set this feature's status to `"in_progress"`.
@@ -89,6 +97,8 @@ DO:
 - Follow existing code conventions in the project
 - Keep functions and files focused and small
 - Use the simplest implementation that works
+- If you have completed more than half of planned file changes, pause and
+  summarize: files changed, files remaining, any open questions. Then continue.
 </anti_overengineering>
 
 Create a safety tag before writing any code:

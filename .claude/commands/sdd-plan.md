@@ -43,11 +43,17 @@ Continue with the plan regardless (this is planning mode, not execution).
 ## Step 4: Explore codebase
 
 <investigate_before_answering>
-Read the codebase before proposing anything:
-- Use Glob to find files related to this feature's domain
-- Use Grep to find existing patterns you'll follow (function signatures, module structure, naming)
-- Read every file you would need to modify
-- Read neighboring files to understand conventions
+Before proposing anything, run this reconnaissance:
+1. Project shape: Glob for entry points (main/index/app/server) and
+   list top-level source directories
+2. Feature neighborhood: Glob and Grep for files related to this
+   feature's domain (by name and by import/reference)
+3. Shared utilities: Check lib/, utils/, helpers/, shared/, common/
+   for reusable code that would be called, not duplicated
+4. Conventions: Read 1-2 existing files in the area to match patterns
+   (naming, error handling, module structure)
+5. File manifest: List every file to create or modify - read each one
+
 Never propose changes to code you haven't read.
 </investigate_before_answering>
 

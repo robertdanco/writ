@@ -86,10 +86,18 @@ Acceptance criteria:
 ## Step 4: Generate implementation plan
 
 <investigate_before_answering>
-Before proposing any implementation, read the relevant parts of the codebase:
-- Use Glob to find files related to this feature's domain
-- Use Grep to find existing patterns for the kind of code you'll write
-- Read the files you'll need to modify
+Before proposing any implementation, run this reconnaissance:
+1. Project shape: Glob for entry points (main/index/app/server) and
+   list top-level source directories
+2. Feature neighborhood: Glob and Grep for files related to this
+   feature's domain (by name and by import/reference)
+3. Shared utilities: Check lib/, utils/, helpers/, shared/, common/
+   for reusable code you should call, not duplicate
+4. Conventions: Read 1-2 existing files in the area you will change
+   to match patterns (naming, error handling, module structure)
+5. File manifest: List every file you will create or modify - read
+   each one before proposing changes
+
 Never propose changes to code you haven't read.
 </investigate_before_answering>
 

@@ -57,6 +57,7 @@ Use the archetype to focus discovery:
 
 For each logical group of routes/commands/exports, propose one feature.
 A feature = one user-observable behavior. Do not create one feature per route - group by resource or capability.
+Flag any feature that appears to span 8+ files or would need 7+ criteria with `[SPLIT?]`.
 
 ### Step 6: Enrich from tests
 
