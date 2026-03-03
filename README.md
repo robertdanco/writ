@@ -31,13 +31,13 @@ cd your-project
 /path/to/writ/init.sh
 ```
 
-Or install into a specific directory without cd-ing first:
+Or specify the directory directly:
 
 ```bash
 /path/to/writ/init.sh /path/to/your/project
 ```
 
-**Recommended: add an alias** so you can run `writ-init` from anywhere:
+Add an alias to run `writ-init` from anywhere:
 
 ```bash
 # Add to ~/.zshrc or ~/.bashrc
@@ -85,11 +85,10 @@ The installer is idempotent - safe to re-run.
 
 ### Specs, not prompts
 
-The core artifact is `writ.json` - a contract that defines what each feature
-must do in terms the model can verify mechanically. Each acceptance criterion
-has a type, a target, and an expected value. The type tells Claude exactly how
-to check it. There's no interpretation: `file_contains` either finds the string
-or it doesn't.
+`writ.json` defines what each feature must do in terms a shell command can verify.
+Each criterion has a type, a target, and an expected value. The type tells Claude
+exactly how to check it: `file_contains` either finds the string or it doesn't.
+No interpretation.
 
 | Type | What it checks | `target` | `expected` |
 |---|---|---|---|
@@ -100,54 +99,47 @@ or it doesn't.
 | `grep_match` | Pattern found in files | Directory or glob | Pattern |
 | `json_path_check` | JSON file field has expected value | JSON file path | jq filter expression |
 
-Typed criteria also prevent a class of problem where the model interprets
-ambiguous prose differently on each run. Six types, each with exactly one
-evaluation method.
+Without typed criteria, the model re-interprets what "verify" means on each run.
+Six types, each with one evaluation method, avoids that.
 
 ### Mechanical verification
 
-Every criterion resolves to an exit code. No LLM-as-judge. An objective bit
-that cannot be argued with. This is what makes autonomous mode possible:
-`writ-loop.sh` can run sessions unattended because "did it pass?" has a
-deterministic answer. Models are capable evaluators of their own work when you
-give them the right question - and exit code 0 is the right question.
+Every criterion resolves to an exit code. No LLM-as-judge. This is what makes
+autonomous mode possible - `writ-loop.sh` can run sessions unattended because
+"did it pass?" is a binary question with a binary answer.
 
 ### One feature per session
 
-Focus produces better code than breadth. Each session starts with a fresh
-context window, loads exactly the files it needs, implements one feature,
-verifies every criterion, and commits. State files (not memory) carry continuity
-between sessions. Claude reconstructs context from `writ.json`, `progress.json`,
-and `git log` at the start of each session - faster and more reliably than from
-compacted summaries.
+Each session starts fresh, loads only the files it needs, implements one feature,
+verifies every criterion, and commits. Claude reads `writ.json`, `progress.json`,
+and `git log` at the start to reconstruct where things stand. No memory of
+previous sessions required.
 
 ### The session protocol
 
-Every `/writ-session` follows five phases:
+Every `/writ-session` runs five phases:
 
-1. **Explore** - Load state, check for stale safety tags, run regression check on existing features
-2. **Plan** - Reconnaissance of project shape and conventions, generate a plan with full criteria coverage mapping
-3. **Execute** - Create a safety tag, implement one feature, nothing more
-4. **Verify** - Check every criterion mechanically. After 3 failures, option to revert to the safety tag
-5. **Commit** - Structured commit, update progress.json, clean up safety tag
+1. Explore - load state, check for stale safety tags, run a regression check on completed features
+2. Plan - map the project shape, generate a plan with full criteria coverage
+3. Execute - create a safety tag, implement one feature, stop
+4. Verify - check every criterion; after 3 failures, offer to revert to the safety tag
+5. Commit - structured commit, update progress.json, remove the safety tag
 
-The regression check in Explore blocks new work on existing failures. The
-safety tag in Execute gives you a clean rollback point. The structured commit
-in Commit produces a git log that reads like a feature changelog.
+The regression check blocks new work when existing features are broken. The safety
+tag means a failed session doesn't leave the codebase half-modified.
 
 ### Structured state
 
-Cross-session continuity comes from three files, not memory.
+Three files carry continuity between sessions.
 
-`writ.json` holds the spec - features, priorities, dependencies, and acceptance
-criteria. It's frozen before any code is written.
+`writ.json` is the spec: features, priorities, dependencies, criteria. Frozen
+before any code is written.
 
-`progress.json` tracks session results, keyed by feature ID. JSON over prose
-because models corrupt Markdown more easily, and because `writ-loop.sh` and
-`/writ-status` can parse it mechanically without LLM interpretation.
+`progress.json` tracks session results keyed by feature ID. JSON rather than
+Markdown because models corrupt free-form text, and because `writ-loop.sh` and
+`/writ-status` can parse it without asking Claude to interpret it.
 
-`git log` carries the audit trail. Every commit message follows a structured
-format.
+`git log` is the audit trail.
 
 A feature in `writ.json` looks like this:
 
@@ -184,17 +176,17 @@ A feature in `writ.json` looks like this:
 
 ## Agents
 
-**`writ-initializer`** - For new projects or when no `writ.json` exists yet.
-Reads a PRD, asks clarifying questions, scaffolds the project, and generates
-`writ.json`. Does not implement features.
+`writ-initializer` is for new projects. Give it a PRD and it asks clarifying
+questions, scaffolds the project, and generates `writ.json`. It doesn't write
+any implementation code.
 
 ```
 "Use the writ-initializer agent to initialize this project"
 ```
 
-**`writ-coder`** - The feature implementation agent. Follows the full 5-phase
-protocol, enforces anti-overengineering constraints, and cannot spawn subagents.
-Use when you want to delegate a complete feature implementation as a bounded task.
+`writ-coder` implements a single feature end-to-end: the full 5-phase protocol,
+with scope constraints enforced and no ability to spawn subagents. Use it when
+you want to hand off a feature completely.
 
 ```
 "Use the writ-coder agent to implement feature user-auth"
@@ -202,8 +194,8 @@ Use when you want to delegate a complete feature implementation as a bounded tas
 
 ## Autonomous mode
 
-Once your spec is solid and your criteria are reliable, `writ-loop.sh` runs
-sessions automatically - the pattern from Anthropic's C compiler case study.
+When your spec is solid and your criteria are reliable, `writ-loop.sh` runs
+sessions automatically.
 
 ```bash
 # Dry run - preview what would happen (default)
@@ -219,12 +211,12 @@ bash scripts/writ-loop.sh --confirm --max-sessions 5
 bash scripts/writ-loop.sh --confirm /path/to/project
 ```
 
-Exit conditions: all features complete, max sessions reached, no progress
-detected (same pending count before and after a session), or a session fails.
-Each session is logged to `writ-loop.log`.
+Sessions stop when all features are complete, max sessions is reached, no
+progress was made in the last session, or a session fails. Everything gets
+logged to `writ-loop.log`.
 
-**When to use:** After running a few interactive sessions to validate your
-criteria are reliable. Immature specs with vague criteria will get stuck.
+Run a few interactive sessions first to validate your criteria. Vague criteria
+will cause the loop to get stuck.
 
 ## CI integration
 
