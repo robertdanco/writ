@@ -79,12 +79,15 @@ else
   ok "Created progress.md template"
 fi
 
-# --- Copy sdd-loop.sh to target scripts/ dir ---
-if [ -f "$SCRIPT_DIR/scripts/sdd-loop.sh" ]; then
+# --- Copy scripts ---
+if [ -d "$SCRIPT_DIR/scripts" ]; then
   mkdir -p "$TARGET_DIR/scripts"
-  cp "$SCRIPT_DIR/scripts/sdd-loop.sh" "$TARGET_DIR/scripts/sdd-loop.sh"
-  chmod +x "$TARGET_DIR/scripts/sdd-loop.sh"
-  ok "Installed scripts/sdd-loop.sh"
+  for script_file in "$SCRIPT_DIR/scripts/"*.sh; do
+    filename="$(basename "$script_file")"
+    cp "$script_file" "$TARGET_DIR/scripts/$filename"
+    chmod +x "$TARGET_DIR/scripts/$filename"
+    ok "Installed scripts/$filename"
+  done
 fi
 
 # --- Append SDD protocol to CLAUDE.md (idempotent) ---
@@ -140,4 +143,7 @@ echo ""
 echo "  5. For autonomous mode (after verifying your spec is solid):"
 echo "      bash scripts/sdd-loop.sh               - dry run preview"
 echo "      bash scripts/sdd-loop.sh --confirm     - run autonomously"
+echo ""
+echo "  6. For CI integration:"
+echo "      bash scripts/sdd-export-checks.sh > ci-checks.sh"
 echo ""

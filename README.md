@@ -49,7 +49,8 @@ your-project/
 ├── progress.json                # Session state (template)
 ├── progress.md                  # Human-readable progress log (template)
 ├── scripts/
-│   └── sdd-loop.sh              # Autonomous session runner
+│   ├── sdd-loop.sh              # Autonomous session runner
+│   └── sdd-export-checks.sh     # CI verification script generator
 └── .claude/
     ├── commands/
     │   ├── sdd-introspect.md    # /sdd-introspect - Brownfield codebase analysis
@@ -111,11 +112,13 @@ claude
 
 Every `/sdd-session` follows this loop:
 
-1. **Explore** - Load spec.json, progress.json, git log. Run regression check.
-2. **Plan** - Select next feature, scan codebase, generate implementation plan.
-3. **Execute** - Implement the feature (one feature per session, nothing more).
-4. **Verify** - Check every acceptance criterion mechanically before committing.
-5. **Commit** - Create structured commit, update progress.json.
+1. **Explore** - Load state, check for stale safety tags, run regression check.
+2. **Plan** - Structured reconnaissance (project shape, utilities, conventions),
+   generate plan with full criteria coverage mapping.
+3. **Execute** - Create safety tag, implement one feature, nothing more.
+4. **Verify** - Check every criterion mechanically. After 3 failures, option
+   to revert to safety tag.
+5. **Commit** - Structured commit, update progress.json, clean up safety tag.
 
 ## Commands
 
@@ -167,6 +170,11 @@ Two-phase PRD ingestion:
 - Phase 2: Expand features with specific, verifiable acceptance criteria
 
 Writes `spec.json` to the project root.
+
+Ambiguous requirements are marked `[NEEDS CLARIFICATION]` and must be resolved
+before criteria generation. If the project has a linter configured, lint
+criteria are automatically included. Features spanning 8+ files are flagged
+with `[SPLIT?]` for decomposition.
 
 ### `/sdd-session [feature-id]`
 
@@ -315,6 +323,28 @@ Each session is logged to `sdd-loop.log` with timestamps.
 **When to use:** After running a few interactive sessions to validate your criteria
 are reliable. Immature specs with vague criteria will get stuck.
 
+## CI verification
+
+Export your acceptance criteria as a standalone CI check script:
+
+```bash
+# Generate a self-contained check script
+bash scripts/sdd-export-checks.sh > ci-checks.sh
+
+# Run it (exits non-zero if any criterion fails)
+bash ci-checks.sh
+```
+
+The generated script checks all completed features against their criteria
+using the same evaluation logic as `/sdd-verify`. All 6 criterion types are
+supported. Unknown types produce a SKIP warning, not a silent pass.
+
+Use in any CI system:
+```yaml
+# GitHub Actions example
+- run: bash <(bash scripts/sdd-export-checks.sh)
+```
+
 ## Design principles
 
 This harness is built on 13 principles synthesized from Anthropic's engineering
@@ -331,5 +361,6 @@ documentation. The key ones:
 ## After installation
 
 1. Fill in your build/test/start commands in `CLAUDE.md` under "Build and test commands"
-2. Either run `/sdd-ingest` with your PRD or use the `sdd-initializer` agent
+2. Either run `/sdd-ingest` with your PRD (Option A), use the `sdd-initializer` agent (Option B),
+   or run `/sdd-introspect` to establish a baseline from an existing codebase (Option C)
 3. Run `/sdd-session` for each feature - that's the whole workflow
