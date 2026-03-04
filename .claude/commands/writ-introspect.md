@@ -10,8 +10,15 @@ Analyze the existing codebase and generate `writ.json` + `progress.json` that ca
 ### Step 1: Check existing state
 
 Read `writ.json` if it exists. If it has features, ask:
-"writ.json already exists with N features. Merge introspected features (preserving existing), replace, or abort?"
+"writ.json already exists with N features. How should I proceed?
+1. Merge - add introspected features, preserving existing entries
+2. Replace - discard existing writ.json and regenerate from introspection
+3. Abort - stop here, keep existing writ.json unchanged"
 Wait for user response before proceeding.
+
+If the project is a monorepo (detected in Step 3 or from a previous run), ask the scoping
+question from Step 4 immediately after the merge/replace decision, before beginning discovery.
+In merge mode, scope discovery to the selected subtree - do not scan the full monorepo.
 
 ### Step 2: Scan project structure
 
@@ -21,6 +28,10 @@ Read in order:
 - `README.md`, `CHANGELOG.md`
 - Any files under `docs/`
 - Glob the source tree to understand layout: `src/**/*`, `lib/**/*`, `app/**/*`, etc.
+
+Skip files that are not project source/docs: test plans, personal notes, writ artifacts
+(test-plan.md, issues.md, writ-loop.log). Focus on code, package manifests, and project
+documentation only.
 
 ### Step 3: Detect archetype
 
@@ -35,6 +46,11 @@ Detection signals:
 | Library | `index.js`/`__init__.py`/`lib.rs` as entry, no server/CLI entry point, primarily exports |
 | Frontend app | framework files (next.config.js, vite.config.js, svelte.config.js), `public/`, JSX/TSX routes |
 | Monorepo | multiple package manifests at different directory levels (`packages/`, `apps/`, `services/`) |
+
+If multiple archetypes match (e.g., both HTTP server signals AND library signals are present),
+classify as a hybrid: "library + HTTP server", "library + CLI tool", etc. Web frameworks
+(Flask, FastAPI, Express, Hono, Gin, etc.) that are imported as libraries but handle HTTP
+routing should be classified as "library + HTTP server", not just "library".
 
 ### Step 4: Monorepo check
 
@@ -124,6 +140,8 @@ I've derived these scenarios from the code - correct anything wrong and fill in 
 ...
 ```
 
+**STOP HERE.** Present the scenarios above and wait for user confirmation before proceeding.
+Do not advance to criteria generation until the user responds.
 Wait for user feedback. Revise scenarios based on their answers.
 All `[NEEDS CLARIFICATION]` markers must be resolved before proceeding to
 criteria generation. Do not guess - ask.
@@ -142,6 +160,18 @@ Rules (same as writ-ingest):
 
 - 3-7 criteria per feature
 - Be specific: actual file paths, real endpoint names, concrete values
+
+**Criterion generation guidelines:**
+- For `grep_match` and `file_contains`: never use patterns starting with `--` (macOS grep
+  treats them as flags). Strip leading dashes from flag names, or use `grep -e` syntax.
+- For Go: flag registration uses the flag name without dash prefix (e.g., `"f"` not `"-f"`
+  in `flag.StringVar`). Match accordingly.
+- For Rust binary crates (has `src/main.rs` or `[[bin]]` in Cargo.toml): use
+  `cargo test --bin <name> <filter>` or `cargo test --test <name>`, not `cargo test --lib`.
+- For file paths containing shell glob characters (`[`, `]`, `*`, `?`): always quote the
+  path in shell commands (e.g., `test -f "src/pages/[...all].vue"`).
+- When generating count-based criteria (e.g., "19 locale files"), verify the count
+  mechanically (`ls locales/*.yml | wc -l`) rather than trusting README/docs.
 
 **Baseline confidence:**
 - **HIGH** = feature confirmed by code + tests + docs
@@ -302,7 +332,7 @@ Next steps:
 | Monorepo | Ask which service at Step 4. Scope discovery to that subtree. |
 | No tests at all | Generate only `command_succeeds` + `file_exists` criteria. Note the absence in the summary. |
 | Extensive tests, no docs | Use test describe/it block hierarchy as the primary feature source. |
-| Library with no entry point | Use `test_passes` + `file_contains` (export checks). No `command_succeeds` criteria. |
+| Library with no entry point | Use `test_passes` + `file_contains` (export checks). No `command_succeeds` criteria. For hybrid "library + HTTP server" archetypes, this rule does not apply - use `command_succeeds` for HTTP behavior. |
 | Frontend / static site | Use build output verification: `npm run build && test -f dist/index.html` |
 | Half-implemented feature | Exclude by default. Report as "partial - consider adding via /writ-ingest after completing." |
 | Abandoned code (TODO, commented-out) | Report but do not generate features. |
