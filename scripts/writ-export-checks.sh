@@ -66,10 +66,17 @@ print(f"# Features checked: {len(completed)} completed")
 if runtimes:
     print(f"# Runtime dependencies detected: {', '.join(sorted(runtimes))}")
 print("#")
-print("# Run this script in the project root. Exit code 0 = all pass.")
+print("# Exit code 0 = all pass.")
 print()
 print("set -uo pipefail")
+# Derive project root from spec file path and emit cd
+spec_dir = os.path.dirname(os.path.abspath(spec_file))
+print(f'cd "{spec_dir}"')
 print()
+if "python3" in runtimes:
+    print('# Activate Python venv if present')
+    print('if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi')
+    print()
 print("PASS=0")
 print("FAIL=0")
 print("SKIP=0")
