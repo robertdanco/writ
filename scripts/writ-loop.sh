@@ -157,6 +157,7 @@ if [ -n "$GIT_STATUS" ]; then
 fi
 
 # --- Main loop ---
+ABS_LOG="$(cd "$PROJECT_DIR" && pwd)/$LOG_FILE"
 SESSION=0
 PROGRESS_MADE=true
 
@@ -171,7 +172,6 @@ while [ "$SESSION" -lt "$MAX_SESSIONS" ] && [ "$PROGRESS_MADE" = true ]; do
 
   # Run session in project directory
   # --dangerously-skip-permissions avoids interactive prompts in non-interactive mode
-  ABS_LOG="$(cd "$PROJECT_DIR" && pwd)/$LOG_FILE"
   if ! (cd "$PROJECT_DIR" && claude --print --dangerously-skip-permissions "/writ-session --auto" 2>>"$ABS_LOG"); then
     log "Session $SESSION: claude exited non-zero"
     err "Session $SESSION failed. Check $LOG_FILE for details."
