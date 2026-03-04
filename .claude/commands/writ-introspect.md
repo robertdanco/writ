@@ -10,8 +10,12 @@ Analyze the existing codebase and generate `writ.json` + `progress.json` that ca
 ### Step 1: Check existing state
 
 Read `writ.json` if it exists. If it has features, ask:
-"writ.json already exists with N features. Merge introspected features (preserving existing), replace, or abort?"
+"writ.json already exists with N features. How should I proceed?
+1. Merge - add introspected features, preserving existing entries
+2. Replace - discard existing writ.json and regenerate from introspection
+3. Abort - stop here, keep existing writ.json unchanged"
 Wait for user response before proceeding.
+
 If the project is a monorepo (detected in Step 3 or from a previous run), ask the scoping
 question from Step 4 immediately after the merge/replace decision, before beginning discovery.
 In merge mode, scope discovery to the selected subtree - do not scan the full monorepo.
@@ -328,7 +332,7 @@ Next steps:
 | Monorepo | Ask which service at Step 4. Scope discovery to that subtree. |
 | No tests at all | Generate only `command_succeeds` + `file_exists` criteria. Note the absence in the summary. |
 | Extensive tests, no docs | Use test describe/it block hierarchy as the primary feature source. |
-| Library with no entry point | Use `test_passes` + `file_contains` (export checks). No `command_succeeds` criteria. |
+| Library with no entry point | Use `test_passes` + `file_contains` (export checks). No `command_succeeds` criteria. For hybrid "library + HTTP server" archetypes, this rule does not apply - use `command_succeeds` for HTTP behavior. |
 | Frontend / static site | Use build output verification: `npm run build && test -f dist/index.html` |
 | Half-implemented feature | Exclude by default. Report as "partial - consider adding via /writ-ingest after completing." |
 | Abandoned code (TODO, commented-out) | Report but do not generate features. |
