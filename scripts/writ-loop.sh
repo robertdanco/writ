@@ -41,6 +41,12 @@ log() {
   echo "$msg"
 }
 
+# --- Pre-flight ---
+if ! command -v claude >/dev/null 2>&1; then
+  err "claude CLI not found in PATH"
+  exit 1
+fi
+
 # --- Validate ---
 if [ ! -f "$PROJECT_DIR/writ.json" ]; then
   err "No writ.json found in $PROJECT_DIR"
@@ -151,6 +157,7 @@ if [ -n "$GIT_STATUS" ]; then
 fi
 
 # --- Main loop ---
+ABS_LOG="$(cd "$PROJECT_DIR" && pwd)/$LOG_FILE"
 SESSION=0
 PROGRESS_MADE=true
 
@@ -165,7 +172,7 @@ while [ "$SESSION" -lt "$MAX_SESSIONS" ] && [ "$PROGRESS_MADE" = true ]; do
 
   # Run session in project directory
   # --dangerously-skip-permissions avoids interactive prompts in non-interactive mode
-  if ! (cd "$PROJECT_DIR" && claude -p --dangerously-skip-permissions "/writ-session --auto" 2>>"$PROJECT_DIR/$LOG_FILE"); then
+  if ! (cd "$PROJECT_DIR" && claude --print --dangerously-skip-permissions "/writ-session --auto" 2>>"$ABS_LOG"); then
     log "Session $SESSION: claude exited non-zero"
     err "Session $SESSION failed. Check $LOG_FILE for details."
     break
