@@ -66,7 +66,7 @@ print(f"# Features checked: {len(completed)} completed")
 if runtimes:
     print(f"# Runtime dependencies detected: {', '.join(sorted(runtimes))}")
 print("#")
-print("# Run this script in the project root. Exit code 0 = all pass.")
+print("# Exit code 0 = all pass.")
 print()
 print("set -uo pipefail")
 # Derive project root from spec file path and emit cd
