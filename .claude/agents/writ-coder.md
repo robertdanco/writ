@@ -166,10 +166,21 @@ EOF
 
 Backfill the commit hash into `progress.json`:
 ```bash
-git rev-parse HEAD
+HASH=$(git rev-parse HEAD)
 ```
-Update the `commit_hash` field for this feature in `progress.json` with the real hash.
-Do NOT create another commit - leave it as a working tree change.
+Update the `commit_hash` field for this feature in `progress.json` with $HASH.
+Also update `progress.md` if the "commit TBD" placeholder exists.
+
+Then amend the commit to include this update:
+```bash
+git add progress.json progress.md
+git commit --amend --no-edit
+```
+
+This is safe because the commit was just created locally and has not been pushed.
+Note: the stored hash is the pre-amend hash. It differs from the final HEAD by
+one amend step (the hash backfill itself). This is acceptable since the hash is
+informational, not used for git operations.
 
 ## Handoff
 

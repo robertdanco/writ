@@ -14,7 +14,14 @@ Read all three state sources in parallel:
 
 Check for leftover safety tags from previous sessions:
 `git tag -l 'writ-pre-*'`
-If any exist, note: "Found stale safety tag(s) from a previous session.
+If any exist:
+
+If $ARGUMENTS contains `--auto`, do not warn about stale safety tags.
+Instead, silently delete all stale tags:
+`git tag -l 'writ-pre-*' | xargs -r git tag -d`
+Log: "Auto-cleaned N stale safety tag(s)."
+
+Otherwise, note: "Found stale safety tag(s) from a previous session.
 Clean up with `git tag -d <tag-name>`."
 
 If `writ.json` does not exist, output:
@@ -48,6 +55,15 @@ How would you like to proceed?
 2. Skip and continue (risky)
 ```
 
+If $ARGUMENTS contains `--auto`:
+  - Attempt to fix the regression (option 1). Re-run `/writ-verify` after fix.
+  - If resolved, continue to Step 3.
+  - If still failing after 3 attempts:
+    - Set the feature's status to `"blocked"` in writ.json.
+    - Log: "AUTO: Regression in <feature-id> unresolved after 3 attempts. Blocked."
+    - Continue to Step 3 (next feature will skip the blocked one).
+
+Otherwise (interactive mode):
 **STOP HERE. Do not diagnose, do not run any commands, do not restore any files.**
 Output the message above and wait for the user to reply with 1 or 2.
 Only after receiving a reply should you take any action.
@@ -139,7 +155,10 @@ The spec is the contract. Pass the criteria. Nothing more.
 </anti_overengineering>
 
 Create a safety tag before writing any code:
-`git tag writ-pre-<feature-id>`
+`git rev-parse HEAD >/dev/null 2>&1 && git tag writ-pre-<feature-id> || true`
+
+If HEAD does not resolve (no commits yet), skip the safety tag silently.
+There is nothing to revert to.
 
 Update `writ.json` to set this feature's status to `"in_progress"` before coding.
 
@@ -170,6 +189,17 @@ Options:
 4. Revert to pre-session state
    (will run `git reset --hard writ-pre-<feature-id>` after your confirmation)
 ```
+If $ARGUMENTS contains `--auto`:
+  - Revert: `git reset --hard writ-pre-<feature-id>`
+  - After the reset, re-apply the status change:
+    - Set feature status to `"blocked"` in writ.json
+    - Update progress.json with blocked entry and criteria_results
+    - `git add writ.json progress.json && git commit -m "chore: mark <feature-id> as blocked"`
+  - Clean up: `git tag -d writ-pre-<feature-id> 2>/dev/null`
+  - Log: "AUTO: <feature-id> failed verification 3x. Reverted and blocked."
+  - Proceed to Step 8 instead of stopping.
+
+Otherwise (interactive mode):
 Wait for user guidance.
 
 ## Step 7: Commit

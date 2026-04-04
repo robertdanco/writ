@@ -84,11 +84,21 @@ Create a structured git commit for the feature ID in $ARGUMENTS, then update sta
 
 9. Capture the commit hash and backfill it into `progress.json`:
    ```bash
-   git rev-parse HEAD
+   HASH=$(git rev-parse HEAD)
    ```
-   Update the `commit_hash` field for this feature in `progress.json` with the real hash.
-   Do NOT create another commit for this update - edit the file in place and leave it
-   as a working tree change. The hash is informational; it does not need to be in git.
+   Update the `commit_hash` field for this feature in `progress.json` with $HASH.
+   Also update `progress.md` if the "commit TBD" placeholder exists.
+
+   Then amend the commit to include this update:
+   ```bash
+   git add progress.json progress.md
+   git commit --amend --no-edit
+   ```
+
+   This is safe because the commit was just created locally and has not been pushed.
+   Note: the stored hash is the pre-amend hash. It differs from the final HEAD by
+   one amend step (the hash backfill itself). This is acceptable since the hash is
+   informational, not used for git operations.
 
 10. Output confirmation:
     ```

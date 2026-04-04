@@ -47,6 +47,13 @@ if ! command -v claude >/dev/null 2>&1; then
   exit 1
 fi
 
+# Detect nested Claude Code session
+if [ -n "${CLAUDE_CODE:-}" ] || [ -n "${CLAUDE_SESSION_ID:-}" ]; then
+  err "writ-loop.sh should not run inside a Claude Code session."
+  err "Run it from a standalone terminal instead."
+  exit 1
+fi
+
 # --- Validate ---
 if [ ! -f "$PROJECT_DIR/writ.json" ]; then
   err "No writ.json found in $PROJECT_DIR"
@@ -84,14 +91,52 @@ with open(s_file) as f:
 total = len(spec.get('features', []))
 # completed = progress.json entries with status completed
 completed = 0
+blocked = 0
 if os.path.exists(p_file):
     with open(p_file) as f:
         p = json.load(f)
     features = p.get('features', p)
     if isinstance(features, dict):
         completed = sum(1 for v in features.values() if isinstance(v, dict) and v.get('status') == 'completed')
-print(total - completed)
+        blocked = sum(1 for v in features.values() if isinstance(v, dict) and v.get('status') == 'blocked')
+print(total - completed - blocked)
 " 2>/dev/null || echo "0"
+}
+
+count_blocked() {
+  python3 -c "
+import json, os
+p_file = '$PROJECT_DIR/progress.json'
+if not os.path.exists(p_file):
+    print(0)
+else:
+    with open(p_file) as f:
+        p = json.load(f)
+    features = p.get('features', p)
+    if isinstance(features, dict):
+        blocked = sum(1 for v in features.values() if isinstance(v, dict) and v.get('status') == 'blocked')
+        print(blocked)
+    else:
+        print(0)
+" 2>/dev/null || echo "0"
+}
+
+clean_crashed_session() {
+  local status tag
+  status=$(git -C "$PROJECT_DIR" status --porcelain -uno 2>/dev/null || echo "")
+  if [ -n "$status" ]; then
+    tag=$(git -C "$PROJECT_DIR" tag -l 'writ-pre-*' | head -1)
+    if [ -n "$tag" ]; then
+      warn "Dirty state with safety tag $tag - reverting crashed session"
+      git -C "$PROJECT_DIR" reset --hard "$tag"
+      git -C "$PROJECT_DIR" tag -d "$tag"
+      log "Auto-reverted to $tag"
+    else
+      err "Dirty state with no safety tag - cannot auto-clean"
+      return 1
+    fi
+  fi
+  return 0
 }
 
 get_project_name() {
@@ -165,10 +210,16 @@ log "=== Writ loop started: project=$PROJECT, pending=$PENDING, max=$MAX_SESSION
 
 while [ "$SESSION" -lt "$MAX_SESSIONS" ] && [ "$PROGRESS_MADE" = true ]; do
   SESSION=$((SESSION + 1))
-  BEFORE=$(count_pending)
+  COMPLETED_BEFORE=$(count_completed)
 
-  log "--- Session $SESSION/$MAX_SESSIONS starting (pending: $BEFORE) ---"
+  log "--- Session $SESSION/$MAX_SESSIONS starting (completed: $COMPLETED_BEFORE) ---"
   info "Session $SESSION/$MAX_SESSIONS..."
+
+  # Recover from any crashed previous session
+  if ! clean_crashed_session; then
+    err "Manual intervention required. Commit or stash changes."
+    break
+  fi
 
   # Run session in project directory
   # --dangerously-skip-permissions avoids interactive prompts in non-interactive mode
@@ -178,18 +229,18 @@ while [ "$SESSION" -lt "$MAX_SESSIONS" ] && [ "$PROGRESS_MADE" = true ]; do
     break
   fi
 
-  AFTER=$(count_pending)
-  COMPLETED_NOW=$(count_completed)
+  COMPLETED_AFTER=$(count_completed)
+  PENDING_NOW=$(count_pending)
 
-  log "Session $SESSION complete: pending $BEFORE -> $AFTER, completed=$COMPLETED_NOW"
+  log "Session $SESSION complete: completed $COMPLETED_BEFORE -> $COMPLETED_AFTER, pending=$PENDING_NOW"
 
-  if [ "$AFTER" -ge "$BEFORE" ]; then
+  if [ "$COMPLETED_AFTER" -le "$COMPLETED_BEFORE" ]; then
     PROGRESS_MADE=false
-    warn "No progress in session $SESSION (pending unchanged at $AFTER)"
+    warn "No progress in session $SESSION (completed unchanged at $COMPLETED_AFTER)"
     log "Loop stopping: no progress detected"
   fi
 
-  if [ "$AFTER" -eq 0 ]; then
+  if [ "$PENDING_NOW" -eq 0 ]; then
     log "All features complete!"
     break
   fi
@@ -198,6 +249,7 @@ done
 # --- Summary ---
 FINAL_PENDING=$(count_pending)
 FINAL_COMPLETED=$(count_completed)
+FINAL_BLOCKED=$(count_blocked)
 SESSIONS_RUN=$SESSION
 
 echo ""
@@ -206,6 +258,7 @@ echo "  Writ Loop Complete"
 echo "========================="
 echo "Sessions run:  $SESSIONS_RUN"
 echo "Completed:     $FINAL_COMPLETED features"
+echo "Blocked:       $FINAL_BLOCKED features"
 echo "Remaining:     $FINAL_PENDING features"
 echo "Log:           $PROJECT_DIR/$LOG_FILE"
 
