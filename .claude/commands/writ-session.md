@@ -18,7 +18,7 @@ If any exist:
 
 If $ARGUMENTS contains `--auto`, do not warn about stale safety tags.
 Instead, silently delete all stale tags:
-`git tag -l 'writ-pre-*' | xargs -r git tag -d`
+`for tag in $(git tag -l 'writ-pre-*'); do git tag -d "$tag"; done`
 Log: "Auto-cleaned N stale safety tag(s)."
 
 Otherwise, note: "Found stale safety tag(s) from a previous session.
