@@ -19,12 +19,14 @@ Convert the PRD at $ARGUMENTS into a structured `writ.json`. $ARGUMENTS is a fil
    - All features, user stories, and functional requirements
    - Any explicit constraints, non-goals, or out-of-scope items
 
-3. Check if `writ.json` already exists. If it does, read it and ask:
-   "writ.json already exists with N features. How should I proceed?
-   1. Merge - add new features from this PRD, preserving existing entries
-   2. Replace - discard existing writ.json and regenerate from this PRD
-   3. Abort - stop here, keep existing writ.json unchanged"
-   Wait for user response before proceeding.
+3. Check if `writ.json` already exists. If it does, read it.
+   - If it contains only the template placeholder (a single feature with id
+     "example-feature"), silently replace it. Log: "Replacing template writ.json."
+   - Otherwise, ask: "writ.json already exists with N features. How should I proceed?
+     1. Merge - add new features from this PRD, preserving existing entries
+     2. Replace - discard existing writ.json and regenerate from this PRD
+     3. Abort - stop here, keep existing writ.json unchanged"
+     Wait for user response before proceeding.
 
 4. Decompose the PRD into features at the right granularity:
    - Each feature = one user-observable behavior ("a user can do X and see Y")
@@ -148,17 +150,37 @@ maps directly to one or more `command_succeeds` criteria.
    Each behavioral criterion manages the server lifecycle and checks a specific
    response, not just that the server starts.
 
+   **Example C** - Config-driven feature:
+   Feature: "User can customize the dashboard layout via config file"
+   ```json
+   [
+     {"type": "file_exists", "target": "config/dashboard.json", "expected": ""},
+     {"type": "json_path_check", "target": "config/dashboard.json", "expected": ".layout"},
+     {"type": "file_contains", "target": "src/dashboard.ts", "expected": "loadConfig"},
+     {"type": "command_succeeds", "target": "node src/cli.js dashboard --config config/dashboard.json | grep -q 'Layout loaded'", "expected": ""}
+   ]
+   ```
+   Config and data features benefit from `json_path_check` and `file_contains`
+   to verify structure without running the full application.
+
    **Criterion types (reference):**
-   - `command_succeeds` - primary. Invokes the project, triggers the feature, checks the result.
-   - `test_passes` - delegates to an existing test runner
-   - `file_exists` - supporting. Confirms a file was created.
-   - `file_contains` - supporting. Checks for specific content (use multi-word strings).
-   - `json_path_check` - supporting. Checks a JSON field via jq filter.
-   - `grep_match` - last resort. Broad pattern search across files.
+   - `command_succeeds` - run a command, check exit code. Best for: runtime behavior,
+     CLI output, API responses, end-to-end flows.
+   - `test_passes` - run a test command. Best for: projects with existing test suites.
+   - `file_exists` - check a file was created. Best for: scaffolding, code generation,
+     build output.
+   - `file_contains` - check for specific content in a file. Best for: config files,
+     generated output, template rendering.
+   - `json_path_check` - check a JSON field via jq filter. Best for: API responses,
+     config validation, structured output.
+   - `grep_match` - pattern search across files. Best for: code conventions, import
+     patterns, cross-file consistency.
 
    **Rules:**
-   - Every feature MUST have at least one behavioral criterion (`command_succeeds` or
-     `test_passes`) that exercises the feature's runtime behavior
+   - Every feature SHOULD have at least one behavioral criterion (`command_succeeds` or
+     `test_passes`) that exercises the feature's runtime behavior. Exceptions: pure
+     config or data features where `json_path_check` or `file_contains` fully verifies
+     the behavior.
    - If the project has a linter or formatter configured (eslint, prettier,
      ruff, clippy, etc.), include a `command_succeeds` criterion running the
      lint command on every feature that creates or modifies source files.
