@@ -139,7 +139,10 @@ The spec is the contract. Pass the criteria. Nothing more.
 </anti_overengineering>
 
 Create a safety tag before writing any code:
-`git tag writ-pre-<feature-id>`
+`git rev-parse HEAD >/dev/null 2>&1 && git tag writ-pre-<feature-id> || true`
+
+If HEAD does not resolve (no commits yet), skip the safety tag silently.
+There is nothing to revert to.
 
 Update `writ.json` to set this feature's status to `"in_progress"` before coding.
 

@@ -19,9 +19,12 @@ Convert the PRD at $ARGUMENTS into a structured `writ.json`. $ARGUMENTS is a fil
    - All features, user stories, and functional requirements
    - Any explicit constraints, non-goals, or out-of-scope items
 
-3. Check if `writ.json` already exists. If it does, read it and ask:
-   "writ.json already exists with N features. Merge new features into it, or replace it?"
-   Wait for user response before proceeding.
+3. Check if `writ.json` already exists. If it does, read it.
+   - If it contains only the template placeholder (a single feature with id
+     "example-feature"), silently replace it. Log: "Replacing template writ.json."
+   - Otherwise, ask: "writ.json already exists with N features.
+     Merge new features into it, or replace it?"
+     Wait for user response before proceeding.
 
 4. Decompose the PRD into features at the right granularity:
    - Each feature = one user-observable behavior ("a user can do X and see Y")
