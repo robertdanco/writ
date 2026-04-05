@@ -114,8 +114,11 @@ rg --no-heading --with-filename -n "^import\s+(\S+)" -o -r '$1' --glob '*.py' .
 ### Go
 
 ```bash
-# import "path" (single and block imports)
-rg --no-heading --with-filename -n '"\s*([^"]+)\s*"' -o -r '$1' --glob '*.go' .
+# Single import: import "path"
+rg --no-heading --with-filename -n '^\s*import\s+"([^"]+)"' -o -r '$1' --glob '*.go' .
+
+# Block imports: lines inside import ( ... ) blocks containing quoted strings
+rg --no-heading --with-filename -n '^\s+"([^"]+)"' -o -r '$1' --glob '*.go' .
 ```
 
 ### Rust

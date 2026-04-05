@@ -82,7 +82,7 @@ fi
 
 # --- Ensure .writ/runs/ is gitignored in target project ---
 TARGET_GITIGNORE="$TARGET_DIR/.gitignore"
-if [ -f "$TARGET_GITIGNORE" ] && grep -q ".writ/runs/" "$TARGET_GITIGNORE" 2>/dev/null; then
+if [ -f "$TARGET_GITIGNORE" ] && grep -qF ".writ/runs/" "$TARGET_GITIGNORE" 2>/dev/null; then
   warn ".gitignore already contains .writ/runs/ - skipping"
 else
   echo "" >> "$TARGET_GITIGNORE"
@@ -91,12 +91,20 @@ else
   ok "Added .writ/runs/ to .gitignore"
 fi
 
-# --- Ensure .writ/spec-session.json is gitignored in target project ---
-if [ -f "$TARGET_GITIGNORE" ] && grep -q "spec-session.json" "$TARGET_GITIGNORE" 2>/dev/null; then
+# --- Ensure .writ/ generated files are gitignored in target project ---
+if [ -f "$TARGET_GITIGNORE" ] && grep -qF "spec-session.json" "$TARGET_GITIGNORE" 2>/dev/null; then
   : # already present
 else
   echo ".writ/spec-session.json" >> "$TARGET_GITIGNORE"
   ok "Added .writ/spec-session.json to .gitignore"
+fi
+
+if [ -f "$TARGET_GITIGNORE" ] && grep -qF ".writ/profile.json" "$TARGET_GITIGNORE" 2>/dev/null; then
+  : # already present
+else
+  echo ".writ/profile.json" >> "$TARGET_GITIGNORE"
+  echo ".writ/test-map.json" >> "$TARGET_GITIGNORE"
+  ok "Added .writ/profile.json and .writ/test-map.json to .gitignore"
 fi
 
 # --- Copy scripts ---
