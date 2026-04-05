@@ -37,7 +37,8 @@ info "Installing Writ into: $TARGET_DIR"
 # --- Create directory structure ---
 mkdir -p "$TARGET_DIR/.claude/commands"
 mkdir -p "$TARGET_DIR/.claude/agents"
-ok "Created .claude/commands/ and .claude/agents/"
+mkdir -p "$TARGET_DIR/.writ"
+ok "Created .claude/commands/, .claude/agents/, and .writ/"
 
 # --- Copy command files ---
 for cmd_file in "$SCRIPT_DIR/.claude/commands/"*.md; do
@@ -77,6 +78,33 @@ if [ -f "$TARGET_DIR/progress.md" ]; then
 else
   cp "$SCRIPT_DIR/templates/progress.md" "$TARGET_DIR/progress.md"
   ok "Created progress.md template"
+fi
+
+# --- Ensure .writ/runs/ is gitignored in target project ---
+TARGET_GITIGNORE="$TARGET_DIR/.gitignore"
+if [ -f "$TARGET_GITIGNORE" ] && grep -qF ".writ/runs/" "$TARGET_GITIGNORE" 2>/dev/null; then
+  warn ".gitignore already contains .writ/runs/ - skipping"
+else
+  echo "" >> "$TARGET_GITIGNORE"
+  echo "# Writ verification run logs" >> "$TARGET_GITIGNORE"
+  echo ".writ/runs/" >> "$TARGET_GITIGNORE"
+  ok "Added .writ/runs/ to .gitignore"
+fi
+
+# --- Ensure .writ/ generated files are gitignored in target project ---
+if [ -f "$TARGET_GITIGNORE" ] && grep -qF "spec-session.json" "$TARGET_GITIGNORE" 2>/dev/null; then
+  : # already present
+else
+  echo ".writ/spec-session.json" >> "$TARGET_GITIGNORE"
+  ok "Added .writ/spec-session.json to .gitignore"
+fi
+
+if [ -f "$TARGET_GITIGNORE" ] && grep -qF ".writ/profile.json" "$TARGET_GITIGNORE" 2>/dev/null; then
+  : # already present
+else
+  echo ".writ/profile.json" >> "$TARGET_GITIGNORE"
+  echo ".writ/test-map.json" >> "$TARGET_GITIGNORE"
+  ok "Added .writ/profile.json and .writ/test-map.json to .gitignore"
 fi
 
 # --- Copy scripts ---
@@ -133,6 +161,9 @@ echo "      /writ-ingest path/to/your/prd.md"
 echo ""
 echo "  3b. If starting from scratch, use the initializer agent:"
 echo "      \"Use the writ-initializer agent to set up the project\""
+echo ""
+echo "  3c. Profile the codebase (recommended for brownfield projects):"
+echo "      /writ-profile"
 echo ""
 echo "  4. Begin development:"
 echo "      /writ-status           - check project progress at any time"

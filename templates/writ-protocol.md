@@ -36,6 +36,19 @@ implement features speculatively or beyond what the spec requires.
 - Leave the environment in a clean, mergeable state after each session
 </constraints>
 
+<codebase_profile>
+If `.writ/profile.json` exists, read it at session start alongside writ.json
+and progress.json. Use it to accelerate reconnaissance:
+- Project shape and entry points: `profile.json -> entry_points, directories`
+- Feature neighborhood: `profile.json -> dependency_graph`
+- Shared utilities: `profile.json -> shared_modules`
+- Test files for changed code: `.writ/test-map.json -> source_to_tests`
+
+If the profile is more than 24 hours old (check `generated_at`), suggest:
+"Profile may be stale. Consider running /writ-profile to refresh."
+The profile is supplementary - always verify critical paths by reading actual files.
+</codebase_profile>
+
 <anti_overengineering>
 Only make changes directly requested by the spec. Do not add features,
 refactor surrounding code, or make improvements beyond the current task.
