@@ -1,0 +1,49 @@
+# Requires: ANTHROPIC_API_KEY set as a GitHub repository secret
+name: Claude Code Review
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+concurrency:
+  group: claude-review-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    # Only run on PR comments from repo members that mention @claude
+    if: |
+      contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.comment.author_association) &&
+      (
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude'))
+      )
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Opus for thorough review; 30 turns (2x default) gives room for
+          # deep analysis across large diffs. Tune down if cost is a concern.
+          claude_args: |
+            --model claude-opus-4-6
+            --max-turns 30
+          prompt: |
+            Review this PR with a focus on:
+            - Correctness and potential bugs
+            - Code quality and maintainability
+            - Security implications
+            - Performance considerations
+
+            Use inline comments for specific code issues.
+            Use a top-level PR comment for general observations and summary.
