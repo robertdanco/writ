@@ -24,11 +24,19 @@ Log: "Auto-cleaned N stale safety tag(s)."
 Otherwise, note: "Found stale safety tag(s) from a previous session.
 Clean up with `git tag -d <tag-name>`."
 
-If `writ.json` does not exist, output:
-```
-No writ.json found. Run /writ-ingest <prd-file> to generate one first,
-or use the writ-initializer agent if starting a brand new project.
-```
+If `writ.json` does not exist:
+- If `.writ/profile.json` exists, output:
+  ```
+  No writ.json found. Codebase profile detected.
+  Run /writ-spec "description of what to build" to co-create a spec with codebase awareness.
+  Or run /writ-ingest <prd-file> if you have a full PRD.
+  ```
+- Otherwise, output:
+  ```
+  No writ.json found. Run /writ-ingest <prd-file> to generate one first,
+  or use the writ-initializer agent if starting a brand new project.
+  For brownfield projects, run /writ-profile first for codebase-aware spec creation.
+  ```
 Then stop.
 
 Summarize current state:
