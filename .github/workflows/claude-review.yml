@@ -34,17 +34,22 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Opus for thorough review; 30 turns (2x default) gives room for
-          # deep analysis across large diffs. Tune down if cost is a concern.
           claude_args: |
             --model claude-opus-4-6
             --max-turns 30
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
           prompt: |
-            Review this PR with a focus on:
-            - Correctness and potential bugs
-            - Code quality and maintainability
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+
+            Please review this pull request with a focus on:
+            - Code quality and best practices
+            - Potential bugs or issues
             - Security implications
             - Performance considerations
 
-            Use inline comments for specific code issues.
-            Use a top-level PR comment for general observations and summary.
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
