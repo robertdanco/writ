@@ -140,7 +140,7 @@ per-criterion with a `timeout` field, or project-wide via `defaults.criterion_ti
 in writ.json.
 
 **Replay logging.** Every verification run writes results to
-`.writ/runs/<feature-id>/<timestamp>.json` with exit codes, stdout/stderr tails,
+`.writ/runs/<feature-id>/<timestamp>-<hex>.json` with exit codes, stdout/stderr tails,
 duration, and pass/fail for each criterion. These logs are gitignored and useful for
 debugging failed verifications.
 

@@ -174,14 +174,15 @@ Implement the feature according to the approved plan. Make targeted, minimal cha
 
 ## Step 6: Verify
 
-Run `/writ-verify <feature-id>` after implementation.
+Run `/writ-verify <feature-id> --auto` after implementation (pass `--auto` to avoid
+blocking on interactive suggestion prompts within the session).
 
 If all criteria pass: proceed to Step 7.
 
 If some criteria fail:
 - Diagnose the specific failure
 - Make targeted fixes
-- Re-run `/writ-verify <feature-id>`
+- Re-run `/writ-verify <feature-id> --auto`
 - Repeat up to 3 times total
 
 After 3 failed attempts, output:

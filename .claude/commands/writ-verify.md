@@ -30,7 +30,7 @@ a spec to evaluate. Fix: run /writ-ingest or /writ-spec first." Stop.
 If `writ.json` has a top-level `defaults` object with a `criterion_timeout` field (integer,
 seconds), note it as the project-level timeout default.
 
-### Step 1.5: Detect timeout command
+### Step 1b: Detect timeout command
 
 Run:
 ```bash
@@ -46,7 +46,7 @@ fi
   timeout enforcement requires GNU coreutils. Fix: `brew install coreutils` (macOS) or
   `apt install coreutils` (Linux)." Continue without timeout enforcement.
 
-### Step 1.6: Load test-map (selective execution)
+### Step 1c: Load test-map (selective execution)
 
 If `.writ/test-map.json` exists, read it and store the `source_to_tests` mapping for use
 in step 3. If it does not exist, selective test execution is disabled (no warning needed).
@@ -150,7 +150,7 @@ After each criterion completes, record:
 **CRITICAL**: Never dump full test output into the response. Run commands, capture exit codes,
 and report summaries only.
 
-### Step 3.5: Write replay log
+### Step 3d: Write replay log
 
 After evaluating ALL criteria for a feature, write the run log to:
 `.writ/runs/<feature-id>/<ISO-timestamp>-<4-random-hex>.json`
@@ -193,14 +193,18 @@ File contents:
 If directory creation fails: "WARNING: Could not create .writ/runs/<id>/. Why: directory
 creation failed. Fix: check filesystem permissions." Continue without writing the log.
 
-### Step 3.6: Cleanup generated files
+### Step 3e: Cleanup generated files
 
 After writing the replay log for each feature, clean up any files modified during evaluation.
 
-**Skip cleanup in `--pending` mode.** Pending checks run against unimplemented code where the
-user may have uncommitted work in progress. Running `git checkout -- .` would revert that work.
+**Skip cleanup if any of:**
+- `--pending` mode (user may have uncommitted work in progress)
+- `git status --porcelain` shows uncommitted changes to tracked files (user is mid-edit)
 
-For all other modes, run:
+If skipping due to uncommitted changes, warn once:
+"Skipping cleanup: uncommitted changes detected. Build artifacts from verification may remain."
+
+Otherwise, run:
 
 ```bash
 git checkout -- . 2>/dev/null || true
@@ -208,6 +212,11 @@ git checkout -- . 2>/dev/null || true
 
 This restores files that criterion evaluation may have modified (coverage reports, build
 artifacts, compiled output). The `|| true` ensures it does not fail on a clean working tree.
+
+Also clean up temp files:
+```bash
+rm -f /tmp/writ-verify-<feature-id>-stdout.txt /tmp/writ-verify-<feature-id>-stderr.txt
+```
 
 **Known limitation**: cleanup runs once after all criteria for a feature, not between each
 criterion. If an earlier criterion generates artifacts that cause a later criterion to produce
@@ -366,7 +375,8 @@ REGRESSION DETECTED: Do not start new features until failures are resolved.
 - Exit codes are authoritative: 0 = success, non-zero = failure.
 - If a command times out (exit 124), mark the criterion FAIL with "Timed out after Ns".
 - If timeout tooling is unavailable, warn once and run commands without timeout.
-- Clean up generated files after evaluating each feature: `git checkout -- . 2>/dev/null || true`
+- Clean up generated files after evaluating each feature unless uncommitted changes are detected.
+- Clean up temp files (`/tmp/writ-verify-<feature-id>-*`) after each feature.
 - Cleanup runs once after all criteria per feature, not between criteria. Criteria ordering
   could theoretically cause false positives from stale artifacts, but this is rare in practice.
 - Selective test execution is disabled in `--all` and `--pending` modes.
