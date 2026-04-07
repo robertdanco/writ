@@ -107,7 +107,7 @@ that must return truthy. If `jq` is not available, fall back to:
 
 This phase applies ONLY when ALL of:
 - The criterion type is `test_passes`
-- `.writ/test-map.json` was loaded in step 1.6
+- `.writ/test-map.json` was loaded in Step 1c
 - Mode is single-feature verification (NOT `--all` or `--pending`)
 
 Process:
@@ -253,7 +253,7 @@ Feature: <feature-id> - <title>
 PASSED: N features
 FAILED: M features
 BLOCKED: list feature IDs that failed
-Replay logs: .writ/runs/<feature-id>/<timestamp>.json
+Replay logs: .writ/runs/<feature-id>/<timestamp>-<hex>.json
 ```
 
 **`--pending` mode:**
@@ -288,7 +288,7 @@ REGRESSION DETECTED: Do not start new features until failures are resolved.
 
 1. Capture the git diff for context. Run:
    ```bash
-   git diff HEAD~1 2>/dev/null || git diff HEAD 2>/dev/null || echo "No diff available"
+   git diff writ-pre-<feature-id> 2>/dev/null || git diff HEAD~1 2>/dev/null || git diff HEAD 2>/dev/null || echo "No diff available"
    ```
    Store the output (truncate to first 500 lines if very large).
 
